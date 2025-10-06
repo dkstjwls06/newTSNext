@@ -16,8 +16,8 @@ server/.env
 # ----------------------------
 # Build outputs
 # ----------------------------
-frontend/dist/
-server/dist/
+frontend/dist/*
+server/dist/*
 # ----------------------------
 # Logs
 # ----------------------------
