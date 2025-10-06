@@ -1,0 +1,15 @@
+{
+  "name": "newts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "concurrently \"cd frontend&&npx webpack -w\" \"cd server&&npx tsc -w\" \"cd server&&nodemon dist/index.js\""
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.2"
+  }
+}
