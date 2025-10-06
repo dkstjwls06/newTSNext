@@ -18,6 +18,9 @@ server/.env
 # ----------------------------
 frontend/dist/*
 server/dist/*
+
+!frontend/dist/.gitkeep
+!server/dist/.gitkeep
 # ----------------------------
 # Logs
 # ----------------------------
