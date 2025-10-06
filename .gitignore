@@ -33,7 +33,7 @@ yarn-error.log*
 # ----------------------------
 .DS_Store
 Thumbs.db
+frontend/.webpack_cache/
 .vscode/
 .idea/
 *.log
-frontend/.webpack_cache/
