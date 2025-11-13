@@ -3,46 +3,58 @@ import path from 'path'
 import http from 'http'
 import https from 'https'
 import { Server } from 'socket.io'
+import next from 'next'
+// 개발 모드 여부
+const dev = process.env.NODE_ENV !== "production";
 
-const app = express();
-const PORT = 80;
-const server = http.createServer(app);
-const io = new Server(server,{
-    cors:{
-        origin:"*",
-        methods:["GET","POST"]
-    }
+const nextApp = next({
+    dev,
+    dir: path.resolve(__dirname, "..", "..", "frontend"), // Next.js 프로젝트 경로
 });
+const handle = nextApp.getRequestHandler();
 
-io.on('connection',(socket)=>{
-    console.log('a user connected : ',socket.id);
-    socket.emit("hello",{msg:"welcome"});
-    socket.on("ping", (data) => {
+async function startServer() {
+    await nextApp.prepare();
+  
+    const app = express();
+    const server = http.createServer(app);
+    const io = new Server(server, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"],
+      },
+    });
+  
+    const PORT = process.env.PORT || 3000;
+  
+    // ✅ Socket.IO 연결 처리
+    io.on("connection", (socket) => {
+      console.log("✅ a user connected:", socket.id);
+  
+      socket.emit("hello", { msg: "welcome" });
+  
+      socket.on("ping", (data) => {
         console.log("ping:", data);
         socket.emit("pong", { at: Date.now() });
-        // socket.broadcast.emit("somebodyPinged", { id: socket.id });
+      });
+  
+      socket.on("disconnect", (reason) => {
+        console.log("❌ disconnected:", socket.id, reason);
+      });
     });
-
-    socket.on("disconnect", (reason) => {
-        console.log("disconnected:", socket.id, reason);
+  
+    // ✅ JSON 요청 처리
+    app.use(express.json());
+  
+    // ✅ Next.js가 모든 페이지 및 API 요청을 처리하도록 위임
+    app.all("*", (req, res) => handle(req, res));
+  
+    // ✅ 서버 실행
+    server.listen(PORT, () => {
+      console.log(`🚀 Server ready at http://localhost:${PORT}`);
     });
-})
-
-app.use(express.json());
-
-app.use(express.static(
-    path.resolve(__dirname, '..', '..', 'frontend', 'dist')
-));
-
-app.use(express.static(
-    path.resolve(__dirname, '..', '..', 'frontend', 'public')
-));
-
-app.get('/', (req, res) => {
-    
-    res.sendFile('index.html', {
-        root:path.resolve(__dirname,'..','..', 'frontend/dist')
-    });
-})
-
-server.listen(PORT, () => console.log(`http://chess0924.iptime.org:${PORT}`));
+  }
+  
+  startServer().catch((err) => {
+    console.error("❌ Server start failed:", err);
+  });

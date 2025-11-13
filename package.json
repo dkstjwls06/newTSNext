@@ -4,7 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "concurrently \"cd frontend&&npx webpack -w\" \"cd server&&npx tsc -w\" \"cd server&&nodemon dist/index.js\""
+    "dev": "concurrently \"npm run dev:front\" \"npm run dev:back\"",
+
+    "dev:front": "cd frontend && npm run dev",
+    "dev:back": "cd server && npx tsc -w",
+
+    "build": "npm run build:front && npm run build:back",
+    "build:front": "cd frontend && npm run build",
+    "build:back": "cd server && npx tsc",
+
+    "start": "cd server && node dist/index.js"
   },
   "author": "",
   "license": "ISC",
