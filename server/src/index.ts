@@ -6,7 +6,9 @@ import { Server } from 'socket.io'
 import next from 'next'
 // 개발 모드 여부
 const dev = process.env.NODE_ENV !== "production";
-
+const ALLOWED_ORIGINS = dev
+  ? ["http://localhost:3000"]
+  : ["http://chess0924.iptime.org"];
 const nextApp = next({
     dev,
     dir: path.resolve(__dirname, "..", "..", "frontend"), // Next.js 프로젝트 경로
@@ -20,12 +22,12 @@ async function startServer() {
     const server = http.createServer(app);
     const io = new Server(server, {
       cors: {
-        origin: "*",
+        origin: ALLOWED_ORIGINS,
         methods: ["GET", "POST"],
       },
     });
   
-    const PORT = process.env.PORT || 3000;
+    const PORT = Number(process.env.PORT) || 3000;
   
     // ✅ Socket.IO 연결 처리
     io.on("connection", (socket) => {

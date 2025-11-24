@@ -4,21 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:front\" \"npm run dev:back\"",
-
-    "dev:front": "cd frontend && npm run dev",
-    "dev:back": "cd server && npx tsc -w",
-
-    "build": "npm run build:front && npm run build:back",
+    "dev": "cd server && npm run dev",
     "build:front": "cd frontend && npm run build",
-    "build:back": "cd server && npx tsc",
-
-    "start": "cd server && node dist/index.js"
+    "build:back": "cd server && npm run build",
+    "build": "npm run build:front && npm run build:back",
+    "start": "cd server && npm start",
+    "dev:split": "concurrently \"npm run dev:front\" \"npm run dev:back\"",
+    "dev:front": "cd frontend && npm run dev",
+    "dev:back": "cd server && npx tsc -w"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "typescript": "^5.9.2"
   }
 }
