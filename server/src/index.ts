@@ -49,7 +49,7 @@ async function startServer() {
     app.use(express.json());
   
     // ✅ Next.js가 모든 페이지 및 API 요청을 처리하도록 위임
-    app.all("*", (req, res) => handle(req, res));
+    app.use((req,res)=>handle(req,res));
   
     // ✅ 서버 실행
     server.listen(PORT, () => {
