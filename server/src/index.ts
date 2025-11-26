@@ -53,7 +53,7 @@ async function startServer() {
   
     // ✅ 서버 실행
     server.listen(PORT, () => {
-      console.log(`🚀 Server ready at http://localhost:${PORT}`);
+      console.log(`🚀 Server ready at ${ALLOWED_ORIGINS[0]}`);
     });
   }
   
