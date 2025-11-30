@@ -37,3 +37,4 @@ frontend/.webpack_cache/
 .vscode/
 .idea/
 *.log
+digest.txt

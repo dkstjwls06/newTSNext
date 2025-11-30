@@ -1,10 +1,22 @@
+/* Tailwind base (v4) */
 @import "tailwindcss";
 
+/* --------------------------------------------------
+ * 1) 전역 테마 토큰 (라이트 모드 기본값)
+ *  - --background, --foreground: 실제 색값
+ *  - Tailwind 쪽에서는 @theme inline 에서 매핑해서 사용
+ * -------------------------------------------------- */
 :root {
   --background: #ffffff;
   --foreground: #171717;
 }
 
+/* --------------------------------------------------
+ * 2) Tailwind @theme 매핑
+ *  - bg-background, text-foreground 같은 유틸리티가
+ *    아래 CSS 변수들을 기준으로 동작하도록 연결
+ *  - 폰트 토큰도 여기서 Next 폰트 변수와 연결
+ * -------------------------------------------------- */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -12,6 +24,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* --------------------------------------------------
+ * 3) 다크 모드에서의 토큰 override
+ *  - prefers-color-scheme: dark 를 기준으로
+ *    동일 토큰 이름에 대해 다른 값 제공
+ * -------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -19,8 +36,16 @@
   }
 }
 
+/* --------------------------------------------------
+ * 4) body 기본 스타일
+ *  - 전체 배경/글자색은 토큰 기반으로 설정
+ *  - 폰트는 Next에서 세팅한 Geist 폰트 변수를 사용
+ *  - 실제 레이아웃(패딩/마진 등)은 페이지/레이아웃
+ *    컴포넌트에서 책임지도록 최소한만 둠
+ * -------------------------------------------------- */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
