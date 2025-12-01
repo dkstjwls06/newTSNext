@@ -5,7 +5,8 @@ import https from 'https';
 import { Server } from 'socket.io';
 import next from 'next';
 import { ENV } from './config/env';
-import { connectMongo } from './db/mongo';
+import { connectMongo, getDb } from './db/mongo';
+import { initDb } from './db/init';
 
 // 개발 모드 여부
 const dev = process.env.NODE_ENV !== "production";
@@ -17,7 +18,9 @@ const nextApp = next({
 const handle = nextApp.getRequestHandler();
 
 async function startServer() {
-  await connectMongo();
+  const { client, db }=await connectMongo();
+
+  await initDb(db);
 
   await nextApp.prepare();
 
@@ -50,6 +53,22 @@ async function startServer() {
 
   // ✅ JSON 요청 처리
   app.use(express.json());
+
+  // ✅ DB 헬스체크 라우트 (GET /api/health/db)
+  app.get("/api/health/db", async (_req, res) => {
+    try {
+      const db = getDb();
+      await db.command({ ping: 1 });
+      res.json({
+        ok: true,
+        env: ENV.NODE_ENV,
+        dbName: db.databaseName,
+      });
+    } catch (err) {
+      console.error("DB health check failed:", err);
+      res.status(500).json({ ok: false });
+    }
+  });
 
   // ✅ Next.js가 모든 페이지 및 API 요청을 처리하도록 위임
   app.use((req,res)=>handle(req,res));
