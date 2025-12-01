@@ -21,6 +21,7 @@ export default function SocketPingTest() {
   const [helloMsg, setHelloMsg] = useState<string | null>(null);
   const [lastPong, setLastPong] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogItem[]>([]);
+  const [dbTestStatus, setDbTestStatus] = useState<string | null>(null);
 
   // 로그 한 줄 추가하는 헬퍼
   const pushLog = (message: string) => {
@@ -84,6 +85,28 @@ export default function SocketPingTest() {
     pushLog("sent ping");
   };
 
+  const runDbTest = () => {
+    pushLog("send db-test");
+    socket.emit(
+      "db-test",
+      (res: {
+        ok: boolean;
+        insertedId?: string;
+        username?: string;
+        totalUsers?: number;
+      }) => {
+        if(res && res.ok){
+          const msg = `db-test ok: insertedId=${res.insertedId}, username=${res.username}, totalUsers=${res.totalUsers}`;
+          setDbTestStatus(msg);
+          pushLog(msg);
+        } else {
+          setDbTestStatus("db-test failed");
+          pushLog("db-test failed");
+        }
+      }
+    );
+  }
+
   return (
     <PageContainer layout="top">
       <div className="flex w-full max-w-3xl flex-col gap-4">
@@ -113,12 +136,20 @@ export default function SocketPingTest() {
                 <span className="font-semibold">Last Pong: </span>
                 <span>{lastPong ?? "(no pong yet)"}</span>
               </div>
+
+              <div className="text-sm">
+                <span className="font-semibold">DB Test: </span>
+                <span>{dbTestStatus ?? "(not tested yet)"}</span>
+              </div>
             </div>
           </CardContent>
 
           <div className="mt-3 mb-3">
             <Button onClick={sendPing} disabled={!connected}>
               Send Ping
+            </Button>
+            <Button variant="outline" onClick={runDbTest} disabled={!connected}>
+              DB Test (insert/find)
             </Button>
           </div>
 

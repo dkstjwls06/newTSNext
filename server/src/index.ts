@@ -45,6 +45,43 @@ async function startServer() {
       console.log("ping:", data);
       socket.emit("pong", { at: Date.now() });
     });
+    // ✅ DB 테스트용 소켓 이벤트
+    // 클라이언트에서: socket.emit("db-test", (res) => { ... });
+    socket.on("db-test", async (ack?: (res: any) => void) => {
+      try {
+        const db = getDb();
+
+        const now = Date.now();
+        const doc = {
+          username: `socket_test_${now}`,
+          email: `socket_test_${now}@example.com`,
+          passwordHash: "dummy",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        const result = await db.collection("users").insertOne(doc);
+        const totalUsers = await db.collection("users").countDocuments();
+
+        console.log(
+          `✅ db-test via socket: inserted ${result.insertedId}, totalUsers=${totalUsers}`
+        );
+
+        if (ack) {
+          ack({
+            ok: true,
+            insertedId: result.insertedId,
+            username: doc.username,
+            totalUsers,
+          });
+        }
+      } catch (err) {
+        console.error("db-test socket error:", err);
+        if (ack) {
+          ack({ ok: false });
+        }
+      }
+    });
 
     socket.on("disconnect", (reason) => {
       console.log("❌ disconnected:", socket.id, reason);
@@ -55,7 +92,7 @@ async function startServer() {
   app.use(express.json());
 
   // ✅ DB 헬스체크 라우트 (GET /api/health/db)
-  app.get("/api/health/db", async (_req, res) => {
+  app.get("/api/health/db", async (req, res) => {
     try {
       const db = getDb();
       await db.command({ ping: 1 });
@@ -67,6 +104,45 @@ async function startServer() {
     } catch (err) {
       console.error("DB health check failed:", err);
       res.status(500).json({ ok: false });
+    }
+  });
+
+  // ✅ 간단한 DB 테스트 라우트 (POST /api/db-test)
+  app.post("/api/db-test", async (req, res) => {
+    try {
+      const db = getDb();
+
+      const now = Date.now();
+      const doc = {
+        username: `test_${now}`,
+        email: `test_${now}@example.com`,
+        passwordHash: "dummy", // 실제 로그인과는 무관한 더미 값
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const result = await db.collection("users").insertOne(doc);
+
+      const recent = await db
+        .collection("users")
+        .find({})
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .toArray();
+
+      res.json({
+        ok: true,
+        insertedId: result.insertedId,
+        recentUsers: recent.map((u) => ({
+          _id: u._id,
+          username: u.username,
+          email: u.email,
+          createdAt: u.createdAt,
+        })),
+      });
+    } catch (err) {
+      console.error("DB test failed:", err);
+      res.status(500).json({ ok: false, error: "db-test failed" });
     }
   });
 
