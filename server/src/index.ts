@@ -4,11 +4,10 @@ import http from 'http'
 import https from 'https'
 import { Server } from 'socket.io'
 import next from 'next'
+import { ENV } from './config/env'
 // 개발 모드 여부
 const dev = process.env.NODE_ENV !== "production";
-const ALLOWED_ORIGINS = dev
-  ? ["http://localhost:3000"]
-  : ["http://chess0924.iptime.org"];
+
 const nextApp = next({
     dev,
     dir: path.resolve(__dirname, "..", "..", "frontend"), // Next.js 프로젝트 경로
@@ -22,12 +21,12 @@ async function startServer() {
     const server = http.createServer(app);
     const io = new Server(server, {
       cors: {
-        origin: ALLOWED_ORIGINS,
+        origin: [ENV.CORS_ORIGIN],
         methods: ["GET", "POST"],
       },
     });
   
-    const PORT = Number(process.env.PORT) || 3000;
+    const PORT = ENV.PORT;
   
     // ✅ Socket.IO 연결 처리
     io.on("connection", (socket) => {
@@ -53,7 +52,7 @@ async function startServer() {
   
     // ✅ 서버 실행
     server.listen(PORT, () => {
-      console.log(`🚀 Server ready at ${ALLOWED_ORIGINS[0]}`);
+      console.log(`🚀 Server ready at ${[ENV.CORS_ORIGIN]}`);
     });
   }
   

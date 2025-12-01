@@ -29,8 +29,29 @@ npm run dev
 }
 ```
 
-Put .env.local while on developing.
+Put .env.local in frontend while on developing.
 `NEXT_PUBLIC_SOCKET_URL=http://localhost:3000`
 
-Put .env.production while on service.
+Put .env.production in frontend while on service.
 `NEXT_PUBLIC_SOCKET_URL=http://chess0924.iptime.org`
+
+Put .env.development in server while on developing.
+```
+NODE_ENV=development
+PORT=3000
+
+MONGODB_URI=mongodb://127.0.0.1:27017
+MONGODB_DB_NAME=chess-app-dev
+
+CORS_ORIGIN=http://localhost:3000
+```
+Put .env.production in server while on service.
+```
+NODE_ENV=production
+PORT=80              
+
+MONGODB_URI=mongodb://127.0.0.1:27017
+MONGODB_DB_NAME=chess-app-prod
+
+CORS_ORIGIN=http://chess0924.iptime.org
+```

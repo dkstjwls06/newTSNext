@@ -10,8 +10,8 @@ server/node_modules/
 # ----------------------------
 .env
 .env.local
-frontend/.env
-server/.env
+frontend/.env*
+server/.env*
 
 # ----------------------------
 # Build outputs
