@@ -5,7 +5,7 @@
 ```bash
 npm run dev
 ```
-```json
+```js
 "scripts": {
     // === 개발용 (권장) ===
     // 통합 서버(dev 모드)만 사용: Next + Socket.IO + Express를 한 번에

@@ -1,15 +1,32 @@
 
-
+import Image from "next/image";
 export default function notFound() {
     return (
-        <html lang="en">
-        <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-            <title>Not Found</title>
-        </head>
-        <body>
-            404 Not Found
-        </body>
-        </html>
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-center py-32 px-16 bg-white dark:bg-black sm:items-start">
+        <Image
+          className="dark:invert mb-6"
+          src="/next.svg"
+          alt="Next.js logo"
+          width={200}
+          height={40}
+          priority
+        />
+        <div className="flex flex-col items-start gap-6 text-center sm:items-start sm:text-left">
+          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
+            404 Page Not Found
+          </h1>
+          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+            The requested URL was not found on this server. That's all we know.{" "}
+            <a
+              href="/"
+              className="font-medium text-zinc-950 dark:text-zinc-50"
+            >
+              Go to Home
+            </a>
+          </p>
+        </div>
+      </main>
+    </div>
     )
 }
