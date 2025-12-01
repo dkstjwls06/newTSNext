@@ -3,6 +3,7 @@ import React from "react";
 interface PageContainerProps {
   className?: string;
   children: React.ReactNode;
+  layout?: "center" | "top";
 }
 
 /**
@@ -11,14 +12,15 @@ interface PageContainerProps {
  * - 적당한 padding
  * - 배경은 globals.css / body 설정을 그대로 사용
  */
-export function PageContainer({ className, children }: PageContainerProps) {
+export function PageContainer({ className, children, layout = "center" }: PageContainerProps) {
+  const base = "min-h-screen flex ";
+  const layoutClass =
+    layout === "center"
+      ? "items-center justify-center p-6"
+      : "items-start justify-center px-6 pt-10 pb-6";
+
   return (
-    <main
-      className={
-        "min-h-screen flex items-center justify-center p-6 " +
-        (className ?? "")
-      }
-    >
+    <main className={`${base}${layoutClass} ${className ?? ""}`}>
       {children}
     </main>
   );

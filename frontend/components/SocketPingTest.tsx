@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { socket } from "@/lib/socket";
-
+import { PageContainer } from "@/components/layout/PageContainer";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent
+} from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 type LogItem = {
   ts: string;
   message: string;
@@ -77,85 +85,66 @@ export default function SocketPingTest() {
   };
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        padding: "40px",
-        backgroundColor: "#0a0a0a",
-        color: "white",
-        display: "flex",
-        flexDirection: "column",
-        gap: "24px",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-      }}
-    >
-      <h1>Socket.IO Ping/Pong Test</h1>
+    <PageContainer layout="top">
+      <div className="flex w-full max-w-3xl flex-col gap-4">
+        {/* 상태/버튼 카드 */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Socket.IO Ping/Pong Test</CardTitle>
+            <CardDescription>
+              서버와의 연결 상태를 확인하고 ping/pong 왕복을 테스트합니다.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="text-sm">
+              <span className="font-semibold">Status: </span>
+              <span
+                className={connected ? "text-emerald-400" : "text-rose-400"}
+              >
+                {connected ? "Connected" : "Disconnected"}
+              </span>
 
-      <section
-        style={{
-          padding: "16px",
-          borderRadius: "12px",
-          backgroundColor: "#111827",
-        }}
-      >
-        <div>
-          <strong>Status:</strong>{" "}
-          <span style={{ color: connected ? "#4ade80" : "#f97373" }}>
-            {connected ? "Connected" : "Disconnected"}
-          </span>
-        </div>
+              <div className="text-sm">
+                <span className="font-semibold">Hello: </span>
+                <span>{helloMsg ?? "(no message received yet)"}</span>
+              </div>
 
-        <div style={{ marginTop: "8px" }}>
-          <strong>Hello:</strong>{" "}
-          <span>{helloMsg ?? "(no message received yet)"}</span>
-        </div>
+              <div className="text-sm">
+                <span className="font-semibold">Last Pong: </span>
+                <span>{lastPong ?? "(no pong yet)"}</span>
+              </div>
+            </div>
+          </CardContent>
 
-        <div style={{ marginTop: "8px" }}>
-          <strong>Last Pong:</strong>{" "}
-          <span>{lastPong ?? "(no pong yet)"}</span>
-        </div>
+          <div className="mt-3 mb-3">
+            <Button onClick={sendPing} disabled={!connected}>
+              Send Ping
+            </Button>
+          </div>
 
-        <button
-          onClick={sendPing}
-          disabled={!connected}
-          style={{
-            marginTop: "16px",
-            padding: "8px 16px",
-            borderRadius: "8px",
-            border: "none",
-            backgroundColor: connected ? "#3b82f6" : "#6b7280",
-            color: "white",
-            cursor: connected ? "pointer" : "not-allowed",
-          }}
-        >
-          Send Ping
-        </button>
-      </section>
+          {/* 로그 카드 */}
+          <Card className="flex-1">
+            <CardHeader className="mb-2">
+              <CardTitle className="text-base">Log</CardTitle>
+            </CardHeader>
 
-      <section
-        style={{
-          padding: "16px",
-          borderRadius: "12px",
-          backgroundColor: "#020617",
-          flex: 1,
-          minHeight: "120px",
-          overflowY: "auto",
-        }}
-      >
-        <h2 style={{ marginBottom: "8px" }}>Log</h2>
-        {logs.length === 0 ? (
-          <div style={{ color: "#9ca3af" }}>No events yet...</div>
-        ) : (
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {logs.map((item, idx) => (
-              <li key={idx} style={{ marginBottom: "4px", fontSize: "14px" }}>
-                <span style={{ color: "#6b7280" }}>[{item.ts}] </span>
-                <span>{item.message}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </main>
+            <CardContent className="max-h-80 overflow-y-auto text-xs">
+              {logs.length === 0 ? (
+                <div className="text-zinc-500">No events yet...</div>
+              ) : (
+                <ul className="space-y-1">
+                  {logs.map((item, idx) => (
+                    <li key={idx}>
+                      <span className="text-zinc-500">[{item.ts}] </span>
+                      <span>{item.message}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </Card>
+      </div>
+    </PageContainer>
   );
 }
