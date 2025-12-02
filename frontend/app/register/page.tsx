@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, FormEvent } from "react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -87,9 +87,10 @@ export default function RegisterPage() {
           "회원가입이 완료되었습니다. 입력하신 이메일로 전송된 인증 메일을 30분 이내에 확인해 주세요. 10초 후 로그인 페이지로 돌아갑니다."
         );
         // 폼은 잠깐 유지
-        // 성공 시 메시지 출력 후 회원가입 버튼 비활성화, 10 초 후 "/"으로 리다이렉트
-        const wait = (delay:number) => new Promise(() => setTimeout(() => router.push("/login"), 10000));
-        await wait(10000);
+        // 성공 시 메시지 출력 후 회원가입 버튼 비활성화, 10 초 후 "/login"으로 리다이렉트
+        setTimeout(() => {
+          router.push("/login");
+        }, 10000);
         return;
       }
 

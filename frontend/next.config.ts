@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
   reactStrictMode: true,
+  env:{
+    AUTH_COOKIE_NAME: process.env.AUTH_COOKIE_NAME || "chess_auth",
+  }
 };
 
 export default nextConfig;

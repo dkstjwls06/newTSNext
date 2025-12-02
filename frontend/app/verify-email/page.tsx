@@ -24,6 +24,7 @@ interface VerifyEmailErrorResponse {
 
 type Status = "idle" | "verifying" | "success" | "error";
 
+
 export default function VerifyEmailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,8 +60,10 @@ export default function VerifyEmailPage() {
       if (res.ok && body && "ok" in body && body.ok === true) {
         setStatus("success");
         setMessage("이메일 인증이 완료되었습니다. 이제 로그인하실 수 있습니다. 10초 후 로그인 페이지로 돌아갑니다.");
-        const wait = (delay:number) => new Promise(() => setTimeout(() => router.push("/login"), 10000));
-        await wait(10000);
+        setTimeout(() => {
+          router.push("/login");
+        }, 10000);
+
         return;
       }
 
@@ -104,7 +107,7 @@ export default function VerifyEmailPage() {
 
     // 페이지 진입 시 자동으로 검증 시작
     verify(token);
-  }, [token]);
+  }, [token, router]);
 
   const isVerifying = status === "verifying";
 

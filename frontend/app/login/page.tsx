@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, FormEvent } from "react";
+import React, { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Card } from "@/components/ui/Card";
@@ -28,6 +28,8 @@ interface LoginErrorResponse {
   error: LoginErrorCode | string;
 }
 
+const AUTH_COOKIE_NAME = "chess_auth";
+const LOGIN_AUTO_REDIRECT_KEY = "chess_login_auto_redirect_attempted";
 export default function LoginPage() {
   const router = useRouter();
 
@@ -36,6 +38,46 @@ export default function LoginPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const cookies = document.cookie ?? "";
+    const hasAuthCookie = cookies
+      .split(";")
+      .some((c) => c.trim().startsWith(`${AUTH_COOKIE_NAME}=`));
+
+    if (!hasAuthCookie) {
+      // 쿠키가 없다면, 이후 정상 로그인한 뒤에는 다시 자동 리다이렉트가
+      // 동작할 수 있도록 플래그를 제거
+      try {
+        sessionStorage.removeItem(LOGIN_AUTO_REDIRECT_KEY);
+      } catch {
+        // sessionStorage 사용 불가한 환경이면 조용히 패스
+      }
+      return;
+    }
+
+    let alreadyTried = false;
+    try {
+      alreadyTried = sessionStorage.getItem(LOGIN_AUTO_REDIRECT_KEY) === "1";
+    } catch {
+      // sessionStorage 사용 불가한 환경이면, 그냥 매번 한 번씩만 시도하는 효과
+      alreadyTried = false;
+    }
+
+    if (alreadyTried) {
+      // 이미 이 탭에서 자동 리다이렉트 시도함 → 더 이상 반복하지 않음
+      return;
+    }
+
+    try {
+      sessionStorage.setItem(LOGIN_AUTO_REDIRECT_KEY, "1");
+    } catch {
+      // 실패해도 기능상 치명적이지 않으므로 무시
+    }
+
+    // 로그인 페이지를 히스토리에 남기지 않기 위해 replace 사용
+    router.replace("/");
+  }, [router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
