@@ -201,6 +201,15 @@ NoSQL 설계에서 제일 중요한 “어떤 쿼리가 자주 나오냐”를 �
     blockedCount: 2
   },
 
+  auth: {
+    emailVerified: false,
+    emailVerification: {
+      token: "random-hex-string",
+      expiresAt: ISODate("...")   // 생성 시점 + 30분
+    },
+    resetPassword: null           // 또는 { token, expiresAt }
+  },
+
   createdAt: ISODate("..."),
   updatedAt: ISODate("...")
 }
@@ -504,6 +513,12 @@ NoSQL 설계에서 제일 중요한 “어떤 쿼리가 자주 나오냐”를 �
     db.users.createIndex({ username: 1 }, { unique: true });
     db.users.createIndex({ email: 1 }, { unique: true });
     // 부분 검색용 text / regex는 상황에 따라 추가
+    
+    ```
+  - 이메일 인증 토큰, 비밀번호 재설정 토큰 조회
+    ```js
+    db.users.createIndex({ "auth.emailVerification.token": 1 });
+    db.users.createIndex({ "auth.resetPassword.token": 1 });  
     ```
 
 - `friendships`

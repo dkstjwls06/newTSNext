@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import bcrypt from "bcryptjs";
 import { ObjectId } from "mongodb";
-
+import { sendEmail } from "../email/mailer";
 import { getDb } from "../db/mongo";
 import type { UserDoc } from "../db/types";
 import { ENV } from "../config/env";
@@ -30,14 +30,6 @@ function clearAuthCookie(res: Response) {
   res.clearCookie(ENV.AUTH_COOKIE_NAME, { path: "/" });
 }
 
-// TODO: 나중에 nodemailer 등으로 교체
-function sendEmailStub(to: string, subject: string, text: string) {
-  console.log("=== EMAIL STUB ===");
-  console.log("To:", to);
-  console.log("Subject:", subject);
-  console.log("Body:", text);
-  console.log("==================");
-}
 
 /**
  * POST /api/auth/register
@@ -109,11 +101,11 @@ router.post("/register", async (req: Request, res: Response) => {
       emailToken,
     )}`;
 
-    sendEmailStub(
-      lowercaseEmail,
-      "[chess0924.iptime.org] 이메일 인증을 완료해 주세요",
-      `다음 링크를 30분 이내에 클릭해서 이메일을 인증해 주세요:\n\n${verificationUrl}`,
-    );
+    await sendEmail({
+      to:lowercaseEmail,
+      subject:"[chess0924.iptime.org] 이메일 인증을 완료해 주세요",
+      text:`다음 링크를 30분 이내에 클릭해서 이메일을 인증해 주세요:\n\n${verificationUrl}`
+    });
 
     return res.status(201).json({
       ok: true,
@@ -150,8 +142,13 @@ router.post("/login", async (req: Request, res: Response) => {
       return res.status(401).json({ error: "INVALID_CREDENTIALS" });
     }
 
-    // 이메일 미인증 상태라면 로그인 막을지 여부는 정책 문제
-    // 우선은 로그인 허용 + 프론트에서 '이메일 미인증' 경고를 띄우도록 ok + emailVerified 전달
+
+    // 이메일 인증 여부 체크
+    if (!user.auth?.emailVerified) {
+      // 프런트에서 이 코드를 보고 "이메일 인증을 먼저 해 주세요" 메시지를 띄우게 하기
+      return res.status(403).json({ error: "EMAIL_NOT_VERIFIED" });
+    }
+
     const token = createSessionToken(user._id.toHexString());
     setAuthCookie(res, token);
 
@@ -161,7 +158,7 @@ router.post("/login", async (req: Request, res: Response) => {
         id: user._id.toHexString(),
         username: user.username,
         email: user.email,
-        emailVerified: !!user.auth?.emailVerified,
+        emailVerified: user.auth.emailVerified,
       },
     });
   } catch (err) {
@@ -265,11 +262,11 @@ router.post("/request-password-reset", async (req: Request, res: Response) => {
       resetToken,
     )}`;
 
-    sendEmailStub(
-      lowercaseEmail,
-      "[chess0924.iptime.org] 비밀번호 재설정 링크",
-      `다음 링크를 30분 이내에 열어 비밀번호를 재설정해 주세요:\n\n${resetUrl}`,
-    );
+    await sendEmail({
+      to: lowercaseEmail,
+      subject: "[chess0924.iptime.org] 비밀번호 재설정 링크",
+      text: `다음 링크를 30분 이내에 열어 비밀번호를 재설정해 주세요:\n\n${resetUrl}`,
+    });
 
     return res.json({ ok: true });
   } catch (err) {

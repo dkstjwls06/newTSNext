@@ -31,14 +31,19 @@ export const ENV = {
     process.env.MONGODB_DB_NAME ?? "chess-app-dev",
 
   CORS_ORIGIN:
-    process.env.CORS_ORIGIN ??
-    (nodeEnv === "production"
-      ? "http://chess0924.iptime.org"
-      : "http://localhost:3000"),
+    defaultCorsOrigin,
   // 추가: 인증용 시크릿/쿠키 이름
   AUTH_SECRET: process.env.AUTH_SECRET ?? "dev-secret-change-me",
   AUTH_COOKIE_NAME: process.env.AUTH_COOKIE_NAME ?? "chess_auth",
 
   // 이메일 링크 만들 때 사용할 앱 베이스 URL
   APP_ORIGIN: process.env.APP_ORIGIN ?? defaultCorsOrigin,
+
+  // 메일 발송 설정
+  EMAIL_FROM: process.env.EMAIL_FROM ?? "no-reply@chess0924.iptime.org",
+  SMTP_HOST: process.env.SMTP_HOST ?? "",
+  SMTP_PORT: Number(process.env.SMTP_PORT ?? 587),
+  SMTP_SECURE: process.env.SMTP_SECURE === "true",
+  SMTP_USER: process.env.SMTP_USER ?? "",
+  SMTP_PASS: process.env.SMTP_PASS ?? "",
 } as const;
