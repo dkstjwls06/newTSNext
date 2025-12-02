@@ -84,13 +84,11 @@ export default function RegisterPage() {
       if (res.ok && body && "ok" in body && body.ok === true) {
         // 회원가입은 바로 로그인시키지 않고, 이메일 인증 유도
         setSuccessMessage(
-          "회원가입이 완료되었습니다. 입력하신 이메일로 전송된 인증 메일을 30분 이내에 확인해 주세요. 10초 후 로그인 페이지로 돌아갑니다."
+          "회원가입이 완료되었습니다. 입력하신 이메일로 전송된 인증 메일을 30분 이내에 확인해 주세요."
         );
         // 폼은 잠깐 유지
-        // 성공 시 메시지 출력 후 회원가입 버튼 비활성화, 10 초 후 "/login"으로 리다이렉트
-        setTimeout(() => {
-          router.push("/login");
-        }, 10000);
+        // 성공 시 메시지 출력 후 회원가입 버튼 비활성화
+        setSuccess(true);
         return;
       }
 
