@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import http from 'http';
 import https from 'https';
+import cookieParser from 'cookie-parser';
 import { Server } from 'socket.io';
 import next from 'next';
 import { ENV } from './config/env';
@@ -91,6 +92,9 @@ async function startServer() {
 
   // ✅ JSON 요청 처리
   app.use(express.json());
+
+  // ✅ 쿠키 파싱 처리
+  app.use(cookieParser());
 
   // ✅ DB 헬스체크 라우트 (GET /api/health/db)
   app.get("/api/health/db", async (req, res) => {

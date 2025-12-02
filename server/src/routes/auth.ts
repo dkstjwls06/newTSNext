@@ -360,7 +360,7 @@ router.get("/me", async (req, res) => {
         projection: {
           username: 1,
           email: 1,
-          emailVerified: 1,
+          "auth.emailVerified": 1
         },
       }
     );
