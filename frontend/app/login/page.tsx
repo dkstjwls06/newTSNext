@@ -110,7 +110,7 @@ export default function LoginPage() {
   return (
     <PageContainer layout="center">
       <Card className="w-full max-w-md">
-        <h1 className="text-2xl font-semibold mb-6 text-center">로그인</h1>
+        <h1 className="text-2xl font-semibold mb-6 text-center">체스게임 로그인</h1>
 
         {errorMessage && (
           <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -164,20 +164,18 @@ export default function LoginPage() {
         <div className="mt-4 flex justify-between text-xs text-gray-600">
           <button
             type="button"
-            className="underline underline-offset-2"
+            className="underline underline-offset-2 hover:cursor-pointer"
             onClick={() => {
-              // 아직 구현 전이므로, 나중에 /register, /forgot-password 등으로 교체
-              alert("회원가입 페이지는 아직 준비 중입니다.");
+              router.push("/register");
             }}
           >
             회원가입
           </button>
           <button
             type="button"
-            className="underline underline-offset-2"
+            className="underline underline-offset-2 hover:cursor-pointer"
             onClick={() => {
-              // 마찬가지로 실제 구현 시 라우팅으로 교체
-              alert("비밀번호 찾기 기능은 아직 준비 중입니다.");
+              router.push("/reset-password");
             }}
           >
             비밀번호를 잊으셨나요?

@@ -23,7 +23,7 @@ export function Button({
     "transition-colors focus-visible:outline-none focus-visible:ring-2 " +
     "focus-visible:ring-offset-2 focus-visible:ring-black/50 " +
     "dark:focus-visible:ring-white/70 disabled:cursor-not-allowed disabled:opacity-50 " +
-    "h-9 px-3";
+    "h-9 px-3 hover:cursor-pointer";
 
   const variantClass =
     variant === "primary"
