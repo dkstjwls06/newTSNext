@@ -258,7 +258,7 @@ export default function ResetPasswordPage() {
     <>
       <h1 className="text-2xl font-semibold mb-2 text-center">새 비밀번호 설정</h1>
       <p className="mb-4 text-sm text-gray-600">
-        새 비밀번호를 입력해 주세요. 이 링크는 일정 시간 후 만료될 수 있습니다.
+        새 비밀번호를 입력해 주세요. 이 링크는 전송 30분 후 만료됩니다.
       </p>
 
       {errorMessage && (

@@ -5,7 +5,7 @@ import { sendEmail } from "../email/mailer";
 import { getDb } from "../db/mongo";
 import type { UserDoc } from "../db/types";
 import { ENV } from "../config/env";
-import { createSessionToken } from "../auth/session";
+import { createSessionToken, verifySessionToken } from "../auth/session";
 import { generateRandomToken, tokenExpiresInMinutes } from "../auth/tokens";
 
 const router = Router();
@@ -326,5 +326,70 @@ router.post("/reset-password", async (req: Request, res: Response) => {
     return res.status(500).json({ error: "INTERNAL_SERVER_ERROR" });
   }
 });
+
+/**
+ * GET /api/auth/me
+ * 현재 세션(쿠키 기반)을 검증하여 로그인된 유저 정보를 반환
+ */
+router.get("/me", async (req, res) => {
+  try {
+    const cookieName = ENV.AUTH_COOKIE_NAME;
+    const token = req.cookies?.[cookieName];
+
+    if (!token) {
+      return res.status(401).json({
+        ok: false,
+        error: "UNAUTHENTICATED",
+      });
+    }
+
+    const payload = verifySessionToken(token);
+    if (!payload) {
+      // 토큰이 만료/위조된 경우 쿠키도 정리
+      clearAuthCookie(res);
+      return res.status(401).json({
+        ok: false,
+        error: "UNAUTHENTICATED",
+      });
+    }
+
+    const users = await usersCollection();
+    const user = await users.findOne(
+      { _id: new ObjectId(payload.userId) },
+      {
+        projection: {
+          username: 1,
+          email: 1,
+          emailVerified: 1,
+        },
+      }
+    );
+
+    if (!user) {
+      clearAuthCookie(res);
+      return res.status(401).json({
+        ok: false,
+        error: "UNAUTHENTICATED",
+      });
+    }
+
+    return res.json({
+      ok: true,
+      user: {
+        id: user._id.toHexString(),
+        username: user.username,
+        email: user.email,
+        emailVerified: !!user.auth.emailVerified,
+      },
+    });
+  } catch (err) {
+    console.error("GET /api/auth/me error:", err);
+    return res.status(500).json({
+      ok: false,
+      error: "INTERNAL_SERVER_ERROR",
+    });
+  }
+});
+
 
 export { router as authRouter };

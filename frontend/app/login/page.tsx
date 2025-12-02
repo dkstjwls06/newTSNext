@@ -40,43 +40,37 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const cookies = document.cookie ?? "";
-    const hasAuthCookie = cookies
-      .split(";")
-      .some((c) => c.trim().startsWith(`${AUTH_COOKIE_NAME}=`));
+    let cancelled = false;
 
-    if (!hasAuthCookie) {
-      // 쿠키가 없다면, 이후 정상 로그인한 뒤에는 다시 자동 리다이렉트가
-      // 동작할 수 있도록 플래그를 제거
+    const checkSession = async () => {
       try {
-        sessionStorage.removeItem(LOGIN_AUTO_REDIRECT_KEY);
-      } catch {
-        // sessionStorage 사용 불가한 환경이면 조용히 패스
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          // same-origin이므로 생략해도 되지만, 명시해 두면 더 명확함
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          // 401/500 등 에러면 로그인 페이지 유지
+          return;
+        }
+
+        const body = (await res.json()) as LoginSuccessResponse | LoginErrorResponse;
+
+        if (!cancelled && "ok" in body && body.ok === true) {
+          router.replace("/");
+        }
+      } catch (err) {
+        // 네트워크 에러 등은 조용히 무시하고 로그인 폼 노출
+        console.error("Failed to check session on login page:", err);
       }
-      return;
-    }
+    };
 
-    let alreadyTried = false;
-    try {
-      alreadyTried = sessionStorage.getItem(LOGIN_AUTO_REDIRECT_KEY) === "1";
-    } catch {
-      // sessionStorage 사용 불가한 환경이면, 그냥 매번 한 번씩만 시도하는 효과
-      alreadyTried = false;
-    }
+    checkSession();
 
-    if (alreadyTried) {
-      // 이미 이 탭에서 자동 리다이렉트 시도함 → 더 이상 반복하지 않음
-      return;
-    }
-
-    try {
-      sessionStorage.setItem(LOGIN_AUTO_REDIRECT_KEY, "1");
-    } catch {
-      // 실패해도 기능상 치명적이지 않으므로 무시
-    }
-
-    // 로그인 페이지를 히스토리에 남기지 않기 위해 replace 사용
-    router.replace("/");
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleSubmit = async (e: FormEvent) => {
