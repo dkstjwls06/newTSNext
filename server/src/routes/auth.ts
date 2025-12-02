@@ -104,7 +104,17 @@ router.post("/register", async (req: Request, res: Response) => {
     await sendEmail({
       to:lowercaseEmail,
       subject:"[chess0924.iptime.org] 이메일 인증을 완료해 주세요",
-      text:`다음 링크를 30분 이내에 클릭해서 이메일을 인증해 주세요:\n\n${verificationUrl}`
+      text:`다음 링크를 30분 이내에 클릭해서 이메일을 인증해 주세요:\n\n${verificationUrl}`,
+      html: `
+        <p>다음 링크를 <strong>30분 이내</strong>에 클릭해서 이메일을 인증해 주세요.</p>
+        <p>
+          <a href="${verificationUrl}" target="_blank" rel="noopener noreferrer">
+            이메일 인증하기
+          </a>
+        </p>
+        <p>만약 위 링크가 클릭되지 않으면, 아래 주소를 복사해서 브라우저 주소창에 붙여 넣어 주세요.</p>
+        <p>${verificationUrl}</p>
+      `,
     });
 
     return res.status(201).json({
@@ -266,6 +276,16 @@ router.post("/request-password-reset", async (req: Request, res: Response) => {
       to: lowercaseEmail,
       subject: "[chess0924.iptime.org] 비밀번호 재설정 링크",
       text: `다음 링크를 30분 이내에 열어 비밀번호를 재설정해 주세요:\n\n${resetUrl}`,
+      html: `
+        <p>다음 링크를 <strong>30분 이내</strong>에 열어서 비밀번호를 재설정해 주세요.</p>
+        <p>
+          <a href="${resetUrl}" target="_blank" rel="noopener noreferrer">
+            비밀번호 재설정하기
+          </a>
+        </p>
+        <p>만약 위 링크가 클릭되지 않으면, 아래 주소를 복사해서 브라우저 주소창에 붙여 넣어 주세요.</p>
+        <p>${resetUrl}</p>
+      `,
     });
 
     return res.json({ ok: true });
