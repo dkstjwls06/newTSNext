@@ -59,10 +59,10 @@ export default function VerifyEmailPage() {
 
       if (res.ok && body && "ok" in body && body.ok === true) {
         setStatus("success");
-        setMessage("이메일 인증이 완료되었습니다. 이제 로그인하실 수 있습니다. 10초 후 로그인 페이지로 돌아갑니다.");
+        setMessage("이메일 인증이 완료되었습니다. 이제 로그인하실 수 있습니다. 잠시 후 로그인 페이지로 이동합니다.");
         setTimeout(() => {
           router.push("/login");
-        }, 10000);
+        }, 5000);
 
         return;
       }
@@ -126,11 +126,11 @@ export default function VerifyEmailPage() {
           )}
 
           {status === "success" && (
-            <p className="text-emerald-700">{message}</p>
+            <p className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-800">{message}</p>
           )}
 
           {status === "error" && (
-            <p className="text-red-700">{message}</p>
+            <p className="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">{message}</p>
           )}
 
           {status !== "verifying" && (
