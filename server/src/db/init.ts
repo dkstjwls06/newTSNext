@@ -1,10 +1,19 @@
 import type { Db } from "mongodb";
+import { FriendshipDoc, UserDoc } from "./types";
 
 export async function initDb(db: Db) {
   // 1) users
   await db.collection("users").createIndexes([
     { key: { username: 1 }, unique: true, name: "users_username_unique" },
     { key: { email: 1 }, unique: true, name: "users_email_unique" },
+    {
+      key: { "auth.emailVerification.token": 1 },
+      name: "users_emailVerification_token",
+    },
+    {
+      key: { "auth.resetPassword.token": 1 },
+      name: "users_resetPassword_token",
+    },
   ]);
 
   // 2) friendships

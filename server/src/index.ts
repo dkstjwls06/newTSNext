@@ -7,6 +7,7 @@ import next from 'next';
 import { ENV } from './config/env';
 import { connectMongo, getDb } from './db/mongo';
 import { initDb } from './db/init';
+import { authRouter } from "./routes/auth";
 
 // 개발 모드 여부
 const dev = process.env.NODE_ENV !== "production";
@@ -145,6 +146,9 @@ async function startServer() {
       res.status(500).json({ ok: false, error: "db-test failed" });
     }
   });
+
+  // 인증 API
+  app.use("/api/auth", authRouter);
 
   // ✅ Next.js가 모든 페이지 및 API 요청을 처리하도록 위임
   app.use((req,res)=>handle(req,res));

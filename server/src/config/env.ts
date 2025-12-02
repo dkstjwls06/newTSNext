@@ -15,6 +15,11 @@ dotenv.config({
   path: path.resolve(process.cwd(), ".env"),
 });
 
+const defaultCorsOrigin = process.env.CORS_ORIGIN ??
+(nodeEnv === "production"
+  ? "http://chess0924.iptime.org"
+  : "http://localhost:3000");
+
 // 4) 타입 안전한 ENV 래퍼
 export const ENV = {
   NODE_ENV: nodeEnv,
@@ -30,4 +35,10 @@ export const ENV = {
     (nodeEnv === "production"
       ? "http://chess0924.iptime.org"
       : "http://localhost:3000"),
+  // 추가: 인증용 시크릿/쿠키 이름
+  AUTH_SECRET: process.env.AUTH_SECRET ?? "dev-secret-change-me",
+  AUTH_COOKIE_NAME: process.env.AUTH_COOKIE_NAME ?? "chess_auth",
+
+  // 이메일 링크 만들 때 사용할 앱 베이스 URL
+  APP_ORIGIN: process.env.APP_ORIGIN ?? defaultCorsOrigin,
 } as const;

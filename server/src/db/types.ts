@@ -31,6 +31,18 @@ export interface UserDoc {
     blockedCount: number;
   };
 
+  auth: {
+    emailVerified: boolean;
+    emailVerification?: {
+      token: string;
+      expiresAt: Date;
+    } | null;
+    resetPassword?: {
+      token: string;
+      expiresAt: Date;
+    } | null;
+  };
+
   createdAt: Date;
   updatedAt: Date;
 }
