@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 type LoginErrorCode = 
   | "INVALID_PAYLOAD"
@@ -32,6 +33,7 @@ const AUTH_COOKIE_NAME = "chess_auth";
 const LOGIN_AUTO_REDIRECT_KEY = "chess_login_auto_redirect_attempted";
 export default function LoginPage() {
   const router = useRouter();
+  const { user, loading, refresh } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,38 +42,14 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const checkSession = async () => {
-      try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          // same-origin이므로 생략해도 되지만, 명시해 두면 더 명확함
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          // 401/500 등 에러면 로그인 페이지 유지
-          return;
-        }
-
-        const body = (await res.json()) as LoginSuccessResponse | LoginErrorResponse;
-
-        if (!cancelled && "ok" in body && body.ok === true) {
-          router.replace("/");
-        }
-      } catch (err) {
-        // 네트워크 에러 등은 조용히 무시하고 로그인 폼 노출
-        console.error("Failed to check session on login page:", err);
-      }
-    };
-
-    checkSession();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
+    // 아직 AuthProvider가 /api/auth/me를 확인 중이면 아무 것도 하지 않음
+    if (loading) return;
+  
+    // 이미 로그인된 상태라면 로그인 페이지에 머물 이유가 없으므로 메인으로 보냄
+    if (user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -107,6 +85,7 @@ export default function LoginPage() {
 
       if (res.ok && body && "ok" in body && body.ok === true) {
         // 성공: 쿠키는 서버에서 설정됨
+        await refresh(); 
         router.push("/");
         return;
       }

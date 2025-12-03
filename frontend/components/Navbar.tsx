@@ -26,16 +26,16 @@ export function Navbar() {
     <nav className="flex h-12 items-center justify-between border-b bg-gray-900 px-4 text-sm text-gray-50">
       {/* 좌측 영역: 로고 + 주요 메뉴 */}
       <div className="flex items-center gap-4">
-        <Link href="/" className="font-semibold hover:text-sky-300">
+        <Link href="/" className="font-semibold hover:text-gray-500">
           Chess App
         </Link>
 
         {user && (
           <>
-            <Link href="/game" className="hover:text-sky-300">
+            <Link href="/game" className="hover:text-gray-500">
               Game
             </Link>
-            <Link href="/profile" className="hover:text-sky-300">
+            <Link href="/profile" className="hover:text-gray-500">
               Profile
             </Link>
           </>
@@ -59,10 +59,10 @@ export function Navbar() {
           </>
         ) : (
           <>
-            <Link href="/login" className="hover:text-sky-300">
+            <Link href="/login" className="hover:text-gray-500">
               로그인
             </Link>
-            <Link href="/register" className="hover:text-sky-300">
+            <Link href="/register" className="hover:text-gray-500">
               회원가입
             </Link>
           </>
