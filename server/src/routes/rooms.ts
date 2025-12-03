@@ -117,7 +117,7 @@ roomsRouter.post("/", async (req: Request, res: Response) => {
     }
 
     const now = new Date();
-
+    const initialRemainingMs = timeControl.initialSeconds * 1000;
     // 최소한의 gameState만 채워두고, 상세 로직은 이후 6.3-3, 6.3-4에서 확장
     const insertResult = await roomsCol.insertOne({
       code: null,
@@ -132,11 +132,25 @@ roomsRouter.post("/", async (req: Request, res: Response) => {
       hostUserId,
       whiteUserId: null,
       blackUserId: null,
+      // spectators는 RoomDoc에서 필수 배열이므로 빈 배열로 초기화
+      spectators: [],
       gameId: null,
-      // RoomGameState 의 실제 구조는 타입에 맞게 이후 단계에서 더 엄밀하게 채울 예정
       gameState: {
-        boardFEN: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-      } as any,
+        boardFEN:
+          "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        moveCount: 0,
+        turn: "white",
+        clocks: {
+          whiteRemainingMs: initialRemainingMs,
+          blackRemainingMs: initialRemainingMs,
+          lastMoveAt: now,
+        },
+        moves: [],
+        result: {
+          status: "ongoing",
+          reason: null,
+        },
+      },
       createdAt: now,
       updatedAt: now,
     } as any);

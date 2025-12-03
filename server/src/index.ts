@@ -186,6 +186,288 @@ async function startServer() {
       },
     );
 
+    // ✅ 방 내 수(움직임) 적용 이벤트: room:move
+    // payload 예시:
+    // {
+    //   roomId: string;
+    //   from: string;            // 예: "e2"
+    //   to: string;              // 예: "e4"
+    //   san: string;             // 예: "e4"
+    //   clientMoveNumber: number; // 클라이언트에서 생각하는 이번 수 번호 (1,2,...)
+    //   nextFEN?: string;        // (옵션) 이 수 이후의 FEN – 1차 단계에서는 클라이언트 FEN 신뢰
+    // }
+    socket.on(
+      "room:move",
+      async (
+        payload: {
+          roomId?: string;
+          from?: string;
+          to?: string;
+          san?: string;
+          clientMoveNumber?: number;
+          nextFEN?: string;
+        },
+        ack?: (res: any) => void,
+      ) => {
+        try {
+          const userId = (socket.data as any).userId;
+          if (!userId) {
+            if (ack) {
+              ack({ ok: false, error: "UNAUTHENTICATED" });
+            }
+            return;
+          }
+
+          const {
+            roomId,
+            from,
+            to,
+            san,
+            clientMoveNumber,
+            nextFEN,
+          } = payload || {};
+
+          // 기본 payload 검증
+          if (
+            !roomId ||
+            !from ||
+            !to ||
+            !san ||
+            typeof clientMoveNumber !== "number"
+          ) {
+            if (ack) {
+              ack({ ok: false, error: "INVALID_PAYLOAD" });
+            }
+            return;
+          }
+
+          // roomId → ObjectId 변환
+          let roomObjectId: ObjectId;
+          try {
+            roomObjectId = new ObjectId(roomId);
+          } catch {
+            if (ack) {
+              ack({ ok: false, error: "INVALID_ROOM_ID" });
+            }
+            return;
+          }
+
+          const db = getDb();
+          const rooms = db.collection("rooms");
+
+          // 현재 방 도큐먼트 조회
+          const room = await rooms.findOne({ _id: roomObjectId });
+          if (!room) {
+            if (ack) {
+              ack({ ok: false, error: "ROOM_NOT_FOUND" });
+            }
+            return;
+          }
+
+          const socketRoomKey = roomObjectId.toHexString();
+
+          const gameState = room.gameState;
+          if (!gameState) {
+            if (ack) {
+              ack({ ok: false, error: "GAME_STATE_NOT_INITIALIZED" });
+            }
+            return;
+          }
+
+          // 현재 턴 / 수 번호
+          const currentMoveCount =
+            typeof gameState.moveCount === "number"
+              ? gameState.moveCount
+              : Array.isArray(gameState.moves)
+              ? gameState.moves.length
+              : 0;
+
+          // 동시 입력 방지용 – clientMoveNumber는 currentMoveCount + 1 이어야 함
+          if (clientMoveNumber !== currentMoveCount + 1) {
+            if (ack) {
+              ack({
+                ok: false,
+                error: "MOVE_CONFLICT",
+                expectedMoveNumber: currentMoveCount + 1,
+                actualMoveNumber: clientMoveNumber,
+              });
+            }
+            return;
+          }
+
+          // 이 방에서의 white/black userId 추출
+          const whiteUserId =
+            room.whiteUserId instanceof ObjectId
+              ? room.whiteUserId.toHexString()
+              : room.whiteUserId
+              ? String(room.whiteUserId)
+              : null;
+          const blackUserId =
+            room.blackUserId instanceof ObjectId
+              ? room.blackUserId.toHexString()
+              : room.blackUserId
+              ? String(room.blackUserId)
+              : null;
+
+          let playerColor: "white" | "black" | null = null;
+          if (whiteUserId && whiteUserId === userId) {
+            playerColor = "white";
+          } else if (blackUserId && blackUserId === userId) {
+            playerColor = "black";
+          }
+
+          if (!playerColor) {
+            if (ack) {
+              ack({ ok: false, error: "NOT_A_PLAYER" });
+            }
+            return;
+          }
+
+          // 현재 gameState.turn과 유저 색상 일치 여부 체크
+          const movingSide =
+            gameState.turn === "white" || gameState.turn === "black"
+              ? gameState.turn
+              : "white";
+
+          if (playerColor !== movingSide) {
+            if (ack) {
+              ack({ ok: false, error: "NOT_YOUR_TURN" });
+            }
+            return;
+          }
+
+          const now = new Date();
+
+          // 클럭 정보 기존 값
+          const prevClocks = gameState.clocks || {};
+          const prevWhiteRemainingMs =
+            typeof prevClocks.whiteRemainingMs === "number"
+              ? prevClocks.whiteRemainingMs
+              : 0;
+          const prevBlackRemainingMs =
+            typeof prevClocks.blackRemainingMs === "number"
+              ? prevClocks.blackRemainingMs
+              : 0;
+
+          const prevLastMoveAt =
+            prevClocks.lastMoveAt instanceof Date
+              ? prevClocks.lastMoveAt
+              : now;
+
+          const elapsedMs = Math.max(
+            0,
+            now.getTime() - prevLastMoveAt.getTime(),
+          );
+
+          // 증분(초읽기) – rooms.timeControl.incrementSeconds 기준
+          const timeControl = room.timeControl || {};
+          const incrementMs =
+            typeof timeControl.incrementSeconds === "number"
+              ? timeControl.incrementSeconds * 1000
+              : 0;
+
+          let newWhiteRemainingMs = prevWhiteRemainingMs;
+          let newBlackRemainingMs = prevBlackRemainingMs;
+
+          if (movingSide === "white") {
+            newWhiteRemainingMs = Math.max(
+              0,
+              prevWhiteRemainingMs - elapsedMs + incrementMs,
+            );
+          } else {
+            newBlackRemainingMs = Math.max(
+              0,
+              prevBlackRemainingMs - elapsedMs + incrementMs,
+            );
+          }
+
+          const nextTurn = movingSide === "white" ? "black" : "white";
+
+          // moves 배열에 이번 수 append
+          const prevMoves = Array.isArray(gameState.moves)
+            ? gameState.moves
+            : [];
+
+          const newMove = {
+            moveNumber: clientMoveNumber,
+            from,
+            to,
+            san,
+            by: movingSide,
+            createdAt: now,
+          };
+
+          const updatedMoves = [...prevMoves, newMove];
+
+          // FEN 업데이트 – 클라이언트가 보내준 nextFEN이 있으면 사용
+          const nextBoardFEN =
+            typeof nextFEN === "string" && nextFEN.length > 0
+              ? nextFEN
+              : gameState.boardFEN;
+
+          const updatedGameState = {
+            ...gameState,
+            boardFEN: nextBoardFEN,
+            moveCount: clientMoveNumber,
+            turn: nextTurn,
+            clocks: {
+              whiteRemainingMs: newWhiteRemainingMs,
+              blackRemainingMs: newBlackRemainingMs,
+              lastMoveAt: now,
+            },
+            moves: updatedMoves,
+          };
+
+          // 동시성 보호를 위해 gameState.moveCount 조건 포함
+          const updateResult = await rooms.updateOne(
+            {
+              _id: roomObjectId,
+              "gameState.moveCount": currentMoveCount,
+            },
+            {
+              $set: {
+                gameState: updatedGameState,
+                updatedAt: now,
+              },
+            },
+          );
+
+          if (!updateResult.matchedCount) {
+            if (ack) {
+              ack({
+                ok: false,
+                error: "MOVE_CONFLICT_DB",
+              });
+            }
+            return;
+          }
+
+          // 메모리 상 room 객체도 최신 gameState로 덮어씀
+          const updatedRoom = {
+            ...room,
+            gameState: updatedGameState,
+            updatedAt: now,
+          };
+
+          // 같은 방에 붙어 있는 모든 소켓에 broadcast
+          io.to(socketRoomKey).emit("room:state", updatedRoom);
+
+          if (ack) {
+            ack({
+              ok: true,
+              gameState: updatedGameState,
+            });
+          }
+        } catch (err) {
+          console.error("room:move error:", err);
+          if (ack) {
+            ack({ ok: false, error: "INTERNAL_SERVER_ERROR" });
+          }
+        }
+      },
+    );
+
+
     socket.on("disconnect", (reason) => {
       console.log("❌ disconnected:", socket.id, reason);
     });
