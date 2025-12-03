@@ -5,7 +5,7 @@ import { ENV } from "../config/env";
 import { verifySessionToken } from "../auth/session";
 import { getDb } from "../db/mongo";
 import type { UserDoc } from "../db/types";
-
+import bcrypt from "bcryptjs";
 const router = Router();
 
 // 이 라우터 전용 users 컬렉션 헬퍼
@@ -283,5 +283,107 @@ router.patch("/me/profile", async (req: Request, res: Response) => {
     });
   }
 });
+
+/**
+ * POST /api/users/me/password
+ *
+ * 로그인된 사용자의 비밀번호를 변경한다.
+ *
+ * 요청 body:
+ * {
+ *   currentPassword: string; // 기존 비밀번호
+ *   newPassword: string;     // 새 비밀번호
+ * }
+ */
+router.post("/me/password", async (req: Request, res: Response) => {
+  try {
+    const token = req.cookies?.[ENV.AUTH_COOKIE_NAME];
+
+    if (!token) {
+      return res.status(401).json({
+        ok: false,
+        error: "UNAUTHENTICATED",
+      });
+    }
+
+    const payload = verifySessionToken(token);
+
+    if (!payload || !payload.userId) {
+      return res.status(401).json({
+        ok: false,
+        error: "UNAUTHENTICATED",
+      });
+    }
+
+    const { currentPassword, newPassword } = req.body ?? {};
+
+    if (
+      typeof currentPassword !== "string" ||
+      typeof newPassword !== "string"
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error: "INVALID_PAYLOAD",
+      });
+    }
+
+    // 최소 길이 정도만 간단하게 체크 (문서에 특별한 규칙이 없으므로)
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        ok: false,
+        error: "WEAK_PASSWORD",
+      });
+    }
+
+    const users = usersCollection();
+    const userObjectId = new ObjectId(payload.userId);
+
+    // 현재 비밀번호를 검증하기 위해 passwordHash 를 가져온다.
+    const user = await users.findOne(
+      { _id: userObjectId },
+      { projection: { passwordHash: 1 } }
+    );
+
+    if (!user || !user.passwordHash) {
+      return res.status(401).json({
+        ok: false,
+        error: "UNAUTHENTICATED",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash
+    );
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        ok: false,
+        error: "INVALID_PASSWORD",
+      });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 12);
+
+    await users.updateOne(
+      { _id: userObjectId },
+      {
+        $set: {
+          passwordHash: newHash,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("POST /api/users/me/password error:", err);
+    return res.status(500).json({
+      ok: false,
+      error: "INTERNAL_SERVER_ERROR",
+    });
+  }
+});
+
 
 export { router as usersRouter };

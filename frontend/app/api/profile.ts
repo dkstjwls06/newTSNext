@@ -21,10 +21,19 @@ export interface UserProfile {
   username: string;
   email: string;
 
+  // 서버에서 auth.emailVerified 를 그대로 내려줌
+  emailVerified: boolean;
+
   rating?: UserRating;
 
   avatarUrl?: string | null;
   bio?: string | null;
+
+  // 서버에서 social.friendCount / blockedCount 내려줌
+  social?: {
+    friendCount: number;
+    blockedCount: number;
+  };
 }
 
 /**
@@ -62,10 +71,17 @@ export type GetMyProfileResponse =
  * - 서버 쪽 zod 스키마가 변경되면 이 타입도 같이 조정해야 함.
  */
 export interface UpdateMyProfileRequest {
-  displayName?: string;
+  /**
+   * 닉네임(=username)
+   * 부분 업데이트를 허용하므로 optional
+   */
+  username?: string;
+
+  /**
+   * 아바타 이미지 URL
+   * null 로 보내면 제거하는 의미로 사용할 수 있게 string | null
+   */
   avatarUrl?: string | null;
-  bio?: string | null;
-  emoji?: string | null;
 }
 
 /**
@@ -86,12 +102,33 @@ export interface UpdateMyProfileErrorResponse {
   error: string;
 }
 
+export interface ChangeMyPasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangeMyPasswordSuccessResponse {
+  ok: true;
+}
+
+export interface ChangeMyPasswordErrorResponse {
+  ok: false;
+  status: number;
+  error: string;
+}
+
+
 /**
  * PATCH /api/users/me/profile 전체 응답 타입 유니온
  */
 export type UpdateMyProfileResponse =
   | UpdateMyProfileSuccessResponse
   | UpdateMyProfileErrorResponse;
+
+
+export type ChangeMyPasswordResponse =
+| ChangeMyPasswordSuccessResponse
+| ChangeMyPasswordErrorResponse;
 
 /**
  * 내부용 JSON 파싱 유틸
@@ -205,5 +242,47 @@ export async function updateMyProfile(
     ok: false,
     status: res.status,
     error: `Invalid response from server (status ${res.status}, PATCH /api/users/me/profile)`,
+  };
+}
+
+export async function changeMyPassword(
+  payload: ChangeMyPasswordRequest,
+  options?: { signal?: AbortSignal }
+): Promise<ChangeMyPasswordResponse> {
+  const res = await fetch("/api/users/me/password", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    signal: options?.signal,
+  });
+
+  const body = await parseJsonSafe<{ ok?: boolean; error?: unknown }>(res);
+
+  if (body && typeof body === "object" && "ok" in body) {
+    if ((body as any).ok === true) {
+      return { ok: true };
+    }
+
+    const serverError =
+      "error" in body && typeof (body as any).error === "string"
+        ? (body as any).error
+        : undefined;
+
+    return {
+      ok: false,
+      status: res.status,
+      error:
+        serverError ??
+        `Request failed with status ${res.status} (POST /api/users/me/password)`,
+    };
+  }
+
+  return {
+    ok: false,
+    status: res.status,
+    error: `Invalid response from server (status ${res.status}, POST /api/users/me/password)`,
   };
 }
