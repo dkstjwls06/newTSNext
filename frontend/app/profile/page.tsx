@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PageContainer } from "@/components/layout/PageContainer";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import {
   Card,
   CardContent,
@@ -196,219 +197,194 @@ export default function ProfilePage() {
     }
   };
 
-  const isUnauthenticated = error === "UNAUTHENTICATED";
-
-  // 비로그인 상태: 안내 카드 + 로그인 버튼
-  if (isUnauthenticated && !profile && !isLoading) {
-    return (
-      <PageContainer layout="center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>내 프로필</CardTitle>
-            <CardDescription>
-              프로필 설정은 로그인 후에만 이용할 수 있습니다.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-700">
-                로그인한 뒤에 다시 이 페이지로 돌아오면 프로필을 수정할 수 있습니다.
-              </p>
-              <div className="flex justify-end">
-                <Button onClick={() => router.push("/login")}>
-                  로그인 하러 가기
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </PageContainer>
-    );
-  }
+  
 
   return (
-    <PageContainer layout="top">
-      <div className="flex w-full max-w-2xl flex-col gap-4">
-        {/* 계정 정보 읽기 전용 카드 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>계정 정보</CardTitle>
-            <CardDescription>
-              로그인 이메일, 레이팅, 계정 생성 일시 등 읽기 전용 정보입니다.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading && !profile ? (
-              <p className="text-sm text-gray-600">
-                계정 정보를 불러오는 중입니다...
-              </p>
-            ) : !profile ? (
-              <p className="text-sm text-gray-600">
-                계정 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.
-              </p>
-            ) : (
-              <dl className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-                <div>
-                  <dt className="text-gray-500">이메일</dt>
-                  <dd className="font-medium text-white-900">
-                    {profile.email ?? "-"}
-                  </dd>
+    <RequireAuth>
+      <PageContainer layout="top">
+        <div className="flex w-full max-w-2xl flex-col gap-4">
+          {/* 계정 정보 읽기 전용 카드 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>계정 정보</CardTitle>
+              <CardDescription>
+                로그인 이메일, 레이팅, 계정 생성 일시 등 읽기 전용 정보입니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoading && !profile ? (
+                <p className="text-sm text-gray-600">
+                  계정 정보를 불러오는 중입니다...
+                </p>
+              ) : !profile ? (
+                <p className="text-sm text-gray-600">
+                  계정 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.
+                </p>
+              ) : (
+                <dl className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
+                  <div>
+                    <dt className="text-gray-500">이메일</dt>
+                    <dd className="font-medium text-white-900">
+                      {profile.email ?? "-"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-500">이메일 인증 여부</dt>
+                    <dd className="font-medium text-white-900">
+                      {profile.emailVerified ? "인증됨" : "미인증"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-500">현재 레이팅</dt>
+                    <dd className="font-medium text-white-900">
+                      {/* rating 구조에 맞게 표시 (문서 기준) */}
+                      {profile.rating
+                        ? `Rapid ${profile.rating.rapid ?? "-"}, Blitz ${
+                            profile.rating.blitz ?? "-"
+                          }, Bullet ${profile.rating.bullet ?? "-"}`
+                        : "-"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-500">계정 생성일</dt>
+                    <dd className="font-medium text-white-900">
+                      {profile.createdAt
+                        ? new Date(profile.createdAt).toLocaleString()
+                        : "-"}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 프로필 수정 카드 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>내 프로필</CardTitle>
+              <CardDescription>
+                닉네임과 아바타 이미지를 수정할 수 있습니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* 상단 공통 에러 / 성공 메시지 */}
+              {(formError || (error && error !== "UNAUTHENTICATED")) && (
+                <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {formError ?? error}
                 </div>
-                <div>
-                  <dt className="text-gray-500">이메일 인증 여부</dt>
-                  <dd className="font-medium text-white-900">
-                    {profile.emailVerified ? "인증됨" : "미인증"}
-                  </dd>
+              )}
+
+              {formSuccess && (
+                <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                  {formSuccess}
                 </div>
-                <div>
-                  <dt className="text-gray-500">현재 레이팅</dt>
-                  <dd className="font-medium text-white-900">
-                    {/* rating 구조에 맞게 표시 (문서 기준) */}
-                    {profile.rating
-                      ? `Rapid ${profile.rating.rapid ?? "-"}, Blitz ${
-                          profile.rating.blitz ?? "-"
-                        }, Bullet ${profile.rating.bullet ?? "-"}`
-                      : "-"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-gray-500">계정 생성일</dt>
-                  <dd className="font-medium text-white-900">
-                    {profile.createdAt
-                      ? new Date(profile.createdAt).toLocaleString()
-                      : "-"}
-                  </dd>
-                </div>
-              </dl>
-            )}
-          </CardContent>
-        </Card>
+              )}
 
-        {/* 프로필 수정 카드 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>내 프로필</CardTitle>
-            <CardDescription>
-              닉네임과 아바타 이미지를 수정할 수 있습니다.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* 상단 공통 에러 / 성공 메시지 */}
-            {(formError || (error && error !== "UNAUTHENTICATED")) && (
-              <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {formError ?? error}
-              </div>
-            )}
-
-            {formSuccess && (
-              <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                {formSuccess}
-              </div>
-            )}
-
-            {isLoading && !profile ? (
-              <p className="text-sm text-gray-600">
-                프로필을 불러오는 중입니다...
-              </p>
-            ) : !profile ? (
-              <p className="text-sm text-gray-600">
-                프로필 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.
-              </p>
-            ) : (
-              <ProfileForm
-                initialUsername={profile.username ?? ""}
-                initialAvatarUrl={profile.avatarUrl ?? ""}
-                isSubmitting={isSubmitting}
-                onSubmit={handleProfileSubmit}
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 비밀번호 변경 카드 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>비밀번호 변경</CardTitle>
-            <CardDescription>
-              현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {passwordErrorMessage && (
-              <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {passwordErrorMessage}
-              </div>
-            )}
-
-            {passwordSuccessMessage && (
-              <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-                {passwordSuccessMessage}
-              </div>
-            )}
-
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="currentPassword"
-                  className="text-sm font-medium text-white-900"
-                >
-                  현재 비밀번호
-                </label>
-                <input
-                  id="currentPassword"
-                  type="password"
-                  autoComplete="current-password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              {isLoading && !profile ? (
+                <p className="text-sm text-gray-600">
+                  프로필을 불러오는 중입니다...
+                </p>
+              ) : !profile ? (
+                <p className="text-sm text-gray-600">
+                  프로필 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.
+                </p>
+              ) : (
+                <ProfileForm
+                  initialUsername={profile.username ?? ""}
+                  initialAvatarUrl={profile.avatarUrl ?? ""}
+                  isSubmitting={isSubmitting}
+                  onSubmit={handleProfileSubmit}
                 />
-              </div>
+              )}
+            </CardContent>
+          </Card>
 
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="newPassword"
-                  className="text-sm font-medium text-white-900"
-                >
-                  새 비밀번호
-                </label>
-                <input
-                  id="newPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
+          {/* 비밀번호 변경 카드 */}
+          <Card>
+            <CardHeader>
+              <CardTitle>비밀번호 변경</CardTitle>
+              <CardDescription>
+                현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {passwordErrorMessage && (
+                <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {passwordErrorMessage}
+                </div>
+              )}
 
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="newPasswordConfirm"
-                  className="text-sm font-medium text-white-900"
-                >
-                  새 비밀번호 확인
-                </label>
-                <input
-                  id="newPasswordConfirm"
-                  type="password"
-                  autoComplete="new-password"
-                  value={newPasswordConfirm}
-                  onChange={(e) => setNewPasswordConfirm(e.target.value)}
-                  className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
+              {passwordSuccessMessage && (
+                <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                  {passwordSuccessMessage}
+                </div>
+              )}
 
-              <div className="flex justify-end pt-2">
-                <Button type="submit" disabled={isChangingPassword}>
-                  {isChangingPassword ? "변경 중..." : "비밀번호 변경"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="currentPassword"
+                    className="text-sm font-medium text-white-900"
+                  >
+                    현재 비밀번호
+                  </label>
+                  <input
+                    id="currentPassword"
+                    type="password"
+                    autoComplete="current-password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
 
-        
-      </div>
-    </PageContainer>
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="newPassword"
+                    className="text-sm font-medium text-white-900"
+                  >
+                    새 비밀번호
+                  </label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="newPasswordConfirm"
+                    className="text-sm font-medium text-white-900"
+                  >
+                    새 비밀번호 확인
+                  </label>
+                  <input
+                    id="newPasswordConfirm"
+                    type="password"
+                    autoComplete="new-password"
+                    value={newPasswordConfirm}
+                    onChange={(e) => setNewPasswordConfirm(e.target.value)}
+                    className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button type="submit" disabled={isChangingPassword}>
+                    {isChangingPassword ? "변경 중..." : "비밀번호 변경"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          
+        </div>
+      </PageContainer>
+    </RequireAuth>
+    
   );
 }
