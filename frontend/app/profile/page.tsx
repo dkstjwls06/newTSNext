@@ -64,6 +64,15 @@ export default function ProfilePage() {
       return;
     }
 
+    // 아바타 URL은 http:// 또는 https:// 로 시작하는 것만 허용
+    if (
+      trimmedAvatarUrl &&
+      !/^https?:\/\//i.test(trimmedAvatarUrl)
+    ) {
+      setFormError("아바타 URL은 http:// 또는 https://로 시작해야 합니다.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await updateProfile({

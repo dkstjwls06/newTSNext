@@ -103,6 +103,7 @@ export function ProfileForm({
           placeholder="https://example.com/avatar.png"
         />
         <p className="text-xs text-gray-500">
+          http:// 또는 https:// 로 시작하는 이미지 주소만 입력할 수 있으며,
           비워 두면 기본 아바타가 사용됩니다.
         </p>
 
