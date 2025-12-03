@@ -63,12 +63,6 @@ export function ProfileForm({
     });
   };
 
-  const handleReset = () => {
-    setUsername(initialUsername);
-    setAvatarUrl(initialAvatarUrl);
-    setAvatarPreviewError(null);
-  };
-
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       {/* 닉네임 입력 */}
@@ -139,15 +133,8 @@ export function ProfileForm({
       </div>
 
       {/* 하단 버튼 영역 */}
-      <div className="flex items-center justify-between pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleReset}
-          disabled={isSubmitting}
-        >
-          변경 내용 되돌리기
-        </Button>
+      <div className="flex items-center justify-end pt-2">
+        
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "저장 중..." : "저장"}
         </Button>
