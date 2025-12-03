@@ -307,7 +307,7 @@ export default function ProfilePage() {
 
         {/* 비밀번호 변경 카드 */}
         <Card className="p-6">
-          <CardTitle>비밀번호 변경경</CardTitle>
+          <CardTitle>비밀번호 변경</CardTitle>
           <CardDescription>
             비밀번호를 변경할 수 있습니다.
           </CardDescription>
