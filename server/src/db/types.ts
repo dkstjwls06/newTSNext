@@ -264,7 +264,7 @@ export interface FriendlyMatchRequestDoc {
       initialSeconds: number;
       incrementSeconds: number;
     };
-    rated: boolean; // 현재는 항상 false지만 타입은 그대로 둠
+    rated: false; 
     colorPreference: "white" | "black" | "auto";
   };
 
