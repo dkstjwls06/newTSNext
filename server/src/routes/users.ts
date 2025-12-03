@@ -273,6 +273,7 @@ router.patch("/me/profile", async (req: Request, res: Response) => {
         social: updatedUser.social,
         createdAt: updatedUser.createdAt,
         updatedAt: updatedUser.updatedAt,
+        bio: updatedUser.bio ?? null
       },
     });
   } catch (err) {

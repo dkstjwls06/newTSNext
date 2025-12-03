@@ -19,6 +19,7 @@ export interface UserDoc {
   email: string;
   passwordHash: string;
   avatarUrl?: string;
+  bio?: string;
 
   rating: {
     rapid: number;

@@ -23,17 +23,16 @@ export interface UserProfile {
 
   // 서버에서 auth.emailVerified 를 그대로 내려줌
   emailVerified: boolean;
-
   rating?: UserRating;
-
   avatarUrl?: string | null;
   bio?: string | null;
-
   // 서버에서 social.friendCount / blockedCount 내려줌
   social?: {
     friendCount: number;
     blockedCount: number;
   };
+  createdAt:Date;
+  updatedAt:Date;
 }
 
 /**

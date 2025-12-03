@@ -1,166 +1,152 @@
-// frontend/components/settings/ProfileForm.tsx
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
-import type {
-  UserProfile,
-  UpdateMyProfileRequest,
-} from "@/app/api/profile";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 
+export interface ProfileFormValues {
+  username: string;
+  avatarUrl: string;
+}
+
 interface ProfileFormProps {
-  profile: UserProfile;
+  /**
+   * 서버에서 내려온 초기 닉네임
+   */
+  initialUsername: string;
+  /**
+   * 서버에서 내려온 초기 아바타 URL (없으면 빈 문자열)
+   */
+  initialAvatarUrl: string;
+  /**
+   * 상위에서 관리하는 저장 중 상태
+   */
   isSubmitting: boolean;
-  onSubmit: (payload: UpdateMyProfileRequest) => Promise<void> | void;
-  serverError?: string | null;
-  onReset?: () => void;
+  /**
+   * 폼 submit 시 호출되는 상위 콜백
+   */
+  onSubmit: (values: ProfileFormValues) => Promise<void> | void;
 }
 
 export function ProfileForm({
-  profile,
+  initialUsername,
+  initialAvatarUrl,
   isSubmitting,
   onSubmit,
-  serverError,
-  onReset,
 }: ProfileFormProps) {
-  const [username, setUsername] = useState(profile.username);
-  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? "");
+  const [username, setUsername] = useState(initialUsername);
+  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl);
+  const [avatarPreviewError, setAvatarPreviewError] = useState<string | null>(
+    null,
+  );
 
+  // 프로필이 갱신되었을 때(초기값 변경) 폼 값도 동기화
   useEffect(() => {
-    // 프로필이 바뀌면 폼도 다시 초기화
-    setUsername(profile.username);
-    setAvatarUrl(profile.avatarUrl ?? "");
-  }, [profile.id, profile.username, profile.avatarUrl]);
+    setUsername(initialUsername);
+    setAvatarUrl(initialAvatarUrl);
+    setAvatarPreviewError(null);
+  }, [initialUsername, initialAvatarUrl]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  // 아바타 이미지 로딩 실패 시 프리뷰 에러 메시지 표시
+  const handleAvatarError = () => {
+    setAvatarPreviewError(
+      "이미지를 불러오지 못했습니다. URL을 다시 확인해 주세요.",
+    );
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const payload: UpdateMyProfileRequest = {
-      username: username.trim() || undefined,
-      avatarUrl: avatarUrl.trim() === "" ? null : avatarUrl.trim(),
-    };
-
-    await onSubmit(payload);
+    await onSubmit({
+      username,
+      avatarUrl,
+    });
   };
 
   const handleReset = () => {
-    setUsername(profile.username);
-    setAvatarUrl(profile.avatarUrl ?? "");
-    onReset?.();
+    setUsername(initialUsername);
+    setAvatarUrl(initialAvatarUrl);
+    setAvatarPreviewError(null);
   };
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      {/* 읽기 전용 정보 섹션 */}
-      <div className="space-y-2 text-sm text-muted-foreground">
-        <div>
-          <span className="font-semibold">이메일: </span>
-          <span>{profile.email}</span>
-        </div>
-        <div>
-          <span className="font-semibold">이메일 인증: </span>
-          <span>{profile.emailVerified ? "완료" : "미완료"}</span>
-        </div>
-        {profile.social && (
-          <div className="flex gap-4">
-            <span>
-              친구 수:{" "}
-              <span className="font-mono">
-                {profile.social.friendCount}
-              </span>
-            </span>
-            <span>
-              차단 수:{" "}
-              <span className="font-mono">
-                {profile.social.blockedCount}
-              </span>
-            </span>
-          </div>
-        )}
-        {profile.rating && (
-          <div className="flex flex-wrap gap-3">
-            <span className="font-semibold">레이팅</span>
-            <span className="font-mono text-xs">
-              rapid: {profile.rating.rapid}
-            </span>
-            <span className="font-mono text-xs">
-              blitz: {profile.rating.blitz}
-            </span>
-            <span className="font-mono text-xs">
-              bullet: {profile.rating.bullet}
-            </span>
-            <span className="font-mono text-xs">
-              puzzle: {profile.rating.puzzle}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* 수정 가능한 필드 섹션 */}
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="username">
-            닉네임 (username)
-          </label>
-          <input
-            id="username"
-            type="text"
-            className="w-full rounded-md border px-3 py-2 text-sm bg-background"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="표시할 닉네임을 입력하세요"
-          />
-        </div>
-
-        <div>
-          <label
-            className="block text-sm font-medium mb-1"
-            htmlFor="avatarUrl"
-          >
-            아바타 이미지 URL
-          </label>
-          <input
-            id="avatarUrl"
-            type="text"
-            className="w-full rounded-md border px-3 py-2 text-sm bg-background"
-            value={avatarUrl}
-            onChange={(e) => setAvatarUrl(e.target.value)}
-            placeholder="https://example.com/avatar.png"
-          />
-          {avatarUrl.trim() !== "" && (
-            <div className="mt-3 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden border">
-                {/* 단순 preview, 에러 핸들링은 추후 개선 */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={avatarUrl}
-                  alt="avatar preview"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span className="text-xs text-muted-foreground">
-                위 URL을 기반으로 아바타가 표시됩니다.
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 에러 및 버튼 영역 */}
-      {serverError && (
-        <p className="text-sm text-red-500 whitespace-pre-line">
-          {serverError}
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      {/* 닉네임 입력 */}
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor="profile-username"
+          className="text-sm font-medium text-gray-900"
+        >
+          닉네임
+        </label>
+        <input
+          id="profile-username"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          placeholder="게임에서 표시될 닉네임을 입력해 주세요"
+        />
+        <p className="text-xs text-gray-500">
+          게임 및 친구 목록 등에서 보여지는 이름입니다.
         </p>
-      )}
+      </div>
 
-      <div className="flex items-center justify-end gap-3">
+      {/* 아바타 URL 입력 */}
+      <div className="flex flex-col gap-1">
+        <label
+          htmlFor="profile-avatar-url"
+          className="text-sm font-medium text-gray-900"
+        >
+          아바타 이미지 URL
+        </label>
+        <input
+          id="profile-avatar-url"
+          type="url"
+          value={avatarUrl}
+          onChange={(e) => setAvatarUrl(e.target.value)}
+          className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          placeholder="https://example.com/avatar.png"
+        />
+        <p className="text-xs text-gray-500">
+          비워 두면 기본 아바타가 사용됩니다.
+        </p>
+
+        {/* 아바타 미리보기 */}
+        {avatarUrl && (
+          <div className="mt-2 flex items-center gap-3">
+            <div className="h-12 w-12 overflow-hidden rounded-full border border-gray-200 bg-gray-50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avatarUrl}
+                alt="아바타 미리보기"
+                className="h-full w-full object-cover"
+                onError={handleAvatarError}
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-500">
+                입력한 URL을 기준으로 렌더링한 아바타 미리보기입니다.
+              </span>
+              {avatarPreviewError && (
+                <span className="mt-1 text-xs text-red-600">
+                  {avatarPreviewError}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 하단 버튼 영역 */}
+      <div className="flex items-center justify-between pt-2">
         <Button
           type="button"
           variant="outline"
-          disabled={isSubmitting}
           onClick={handleReset}
+          disabled={isSubmitting}
         >
-          초기화
+          변경 내용 되돌리기
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "저장 중..." : "저장"}

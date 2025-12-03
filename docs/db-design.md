@@ -189,7 +189,7 @@ NoSQL 설계에서 제일 중요한 “어떤 쿼리가 자주 나오냐”를 �
   email: "user@example.com",     // unique
   passwordHash: "bcrypt...",
   avatarUrl: "https://...",
-
+  bio: "sfesf" | undefined,
   rating: {
     rapid: 1500,
     blitz: 1500,
