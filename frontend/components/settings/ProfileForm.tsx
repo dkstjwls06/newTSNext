@@ -69,7 +69,7 @@ export function ProfileForm({
       <div className="flex flex-col gap-1">
         <label
           htmlFor="profile-username"
-          className="text-sm font-medium text-gray-900"
+          className="text-sm font-medium "
         >
           닉네임
         </label>
@@ -90,7 +90,7 @@ export function ProfileForm({
       <div className="flex flex-col gap-1">
         <label
           htmlFor="profile-avatar-url"
-          className="text-sm font-medium text-gray-900"
+          className="text-sm font-medium"
         >
           아바타 이미지 URL
         </label>
