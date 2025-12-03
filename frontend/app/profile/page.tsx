@@ -52,6 +52,7 @@ export default function ProfilePage() {
     setAvatarUrl(profile.avatarUrl ?? "");
   }, [profile]);
 
+  // 프로필 변경 핸들러
   const handleProfileSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -108,7 +109,7 @@ export default function ProfilePage() {
     }
   };
 
-  // --- 비밀번호 변경 핸들러 ---
+  // 비밀번호 변경 핸들러
   const handlePasswordSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setPasswordSuccessMessage(null);
@@ -235,7 +236,7 @@ export default function ProfilePage() {
                 프로필 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.
               </p>
             ) : (
-              <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <form onSubmit={handleProfileSubmit} className="flex flex-col gap-4">
                 {/* 닉네임(표시 이름) */}
                 <div className="flex flex-col gap-1">
                   <label
@@ -307,10 +308,12 @@ export default function ProfilePage() {
 
         {/* 비밀번호 변경 카드 */}
         <Card className="p-6">
-          <CardTitle>비밀번호 변경</CardTitle>
-          <CardDescription>
-            비밀번호를 변경할 수 있습니다.
-          </CardDescription>
+          <CardHeader>
+            <CardTitle>비밀번호 변경</CardTitle>
+            <CardDescription>
+              비밀번호를 변경할 수 있습니다.
+            </CardDescription>
+          </CardHeader>
           <CardContent>
             {passwordSuccessMessage && (
               <div className="mb-4 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
@@ -329,7 +332,7 @@ export default function ProfilePage() {
                 <label className="text-sm font-medium">현재 비밀번호</label>
                 <input
                   type="password"
-                  className="rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   autoComplete="current-password"
@@ -340,7 +343,7 @@ export default function ProfilePage() {
                 <label className="text-sm font-medium">새 비밀번호</label>
                 <input
                   type="password"
-                  className="rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   autoComplete="new-password"
@@ -351,7 +354,7 @@ export default function ProfilePage() {
                 <label className="text-sm font-medium">새 비밀번호 확인</label>
                 <input
                   type="password"
-                  className="rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  className="h-10 rounded-md border border-gray-300 px-3 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   value={newPasswordConfirm}
                   onChange={(e) => setNewPasswordConfirm(e.target.value)}
                   autoComplete="new-password"
