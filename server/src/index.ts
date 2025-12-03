@@ -10,6 +10,7 @@ import { connectMongo, getDb } from './db/mongo';
 import { initDb } from './db/init';
 import { authRouter } from "./routes/auth";
 import { usersRouter } from './routes/users';
+import { roomsRouter } from './routes/rooms';
 
 // 개발 모드 여부
 const dev = process.env.NODE_ENV !== "production";
@@ -156,6 +157,8 @@ async function startServer() {
   app.use("/api/auth", authRouter);
 
   app.use("/api/users",usersRouter);
+
+  app.use("/api/rooms", roomsRouter);
 
   // ✅ Next.js가 모든 페이지 및 API 요청을 처리하도록 위임
   app.use((req,res)=>handle(req,res));
