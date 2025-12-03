@@ -4,6 +4,7 @@ import http from 'http';
 import https from 'https';
 import cookieParser from 'cookie-parser';
 import { Server } from 'socket.io';
+import { ObjectId } from 'mongodb';
 import next from 'next';
 import { ENV } from './config/env';
 import { connectMongo, getDb } from './db/mongo';
@@ -11,6 +12,7 @@ import { initDb } from './db/init';
 import { authRouter } from "./routes/auth";
 import { usersRouter } from './routes/users';
 import { roomsRouter } from './routes/rooms';
+import { verifySessionToken } from './auth/session';
 
 // 개발 모드 여부
 const dev = process.env.NODE_ENV !== "production";
@@ -41,51 +43,148 @@ async function startServer() {
 
   // ✅ Socket.IO 연결 처리
   io.on("connection", (socket) => {
-    console.log("✅ a user connected:", socket.id);
+    // 1) 핸드셰이크 쿠키에서 세션 토큰 추출
+    const cookieHeader = socket.request.headers.cookie || "";
+    const cookies: Record<string, string> = {};
+
+    for (const part of cookieHeader.split(";")) {
+      const [rawKey, ...rawValParts] = part.split("=");
+      if (!rawKey) continue;
+      const key = rawKey.trim();
+      if (!key) continue;
+      const value = rawValParts.join("=").trim();
+      cookies[key] = value;
+    }
+
+    const token = cookies[ENV.AUTH_COOKIE_NAME];
+    const session = token ? verifySessionToken(token) : null;
+
+    if (session && session.userId) {
+      // 이후 이벤트에서 재사용할 수 있도록 userId를 socket.data에 넣어 둔다.
+      (socket.data as any).userId = session.userId;
+    }
+
+    console.log(
+      "✅ a user connected:",
+      socket.id,
+      "userId=",
+      (socket.data as any).userId ?? null,
+    );
 
     socket.emit("hello", { msg: "welcome" });
+    
+    // ✅ 방 입장 이벤트: room:join
+    // payload: { roomId: string }
+    // 클라이언트 예시: socket.emit("room:join", { roomId }, (res) => { ... });
+    socket.on(
+      "room:join",
+      async (
+        payload: { roomId?: string },
+        ack?: (res: any) => void,
+      ) => {
+        try {
+          const userId = (socket.data as any).userId;
+          if (!userId) {
+            if (ack) {
+              ack({ ok: false, error: "UNAUTHENTICATED" });
+            }
+            return;
+          }
 
-    socket.on("ping", (data) => {
-      console.log("ping:", data);
-      socket.emit("pong", { at: Date.now() });
-    });
-    // ✅ DB 테스트용 소켓 이벤트
-    // 클라이언트에서: socket.emit("db-test", (res) => { ... });
-    socket.on("db-test", async (ack?: (res: any) => void) => {
-      try {
-        const db = getDb();
+          const roomId = payload?.roomId;
+          if (!roomId) {
+            if (ack) {
+              ack({ ok: false, error: "INVALID_PAYLOAD" });
+            }
+            return;
+          }
 
-        const now = Date.now();
-        const doc = {
-          username: `socket_test_${now}`,
-          email: `socket_test_${now}@example.com`,
-          passwordHash: "dummy",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
+          let roomObjectId: ObjectId;
+          try {
+            roomObjectId = new ObjectId(roomId);
+          } catch {
+            if (ack) {
+              ack({ ok: false, error: "INVALID_ROOM_ID" });
+            }
+            return;
+          }
 
-        const result = await db.collection("users").insertOne(doc);
-        const totalUsers = await db.collection("users").countDocuments();
+          const db = getDb();
+          const rooms = db.collection("rooms");
 
-        console.log(
-          `✅ db-test via socket: inserted ${result.insertedId}, totalUsers=${totalUsers}`
-        );
+          const room = await rooms.findOne({ _id: roomObjectId });
+          if (!room) {
+            if (ack) {
+              ack({ ok: false, error: "ROOM_NOT_FOUND" });
+            }
+            return;
+          }
 
-        if (ack) {
-          ack({
-            ok: true,
-            insertedId: result.insertedId,
-            username: doc.username,
-            totalUsers,
+          const socketRoomKey = roomObjectId.toHexString();
+
+          // Socket.IO 내부 room에 참가
+          socket.join(socketRoomKey);
+
+          // 다른 클라이언트에게 "누가 들어왔다"를 알려주는 단순 broadcast
+          socket.to(socketRoomKey).emit("room:user-joined", {
+            roomId: socketRoomKey,
+            userId,
           });
+
+          // 입장한 클라이언트에게 현재 방 상태(rooms 컬렉션 도큐먼트)를 내려준다.
+          socket.emit("room:state", room);
+
+          if (ack) {
+            ack({
+              ok: true,
+              roomId: socketRoomKey,
+            });
+          }
+        } catch (err) {
+          console.error("room:join error:", err);
+          if (ack) {
+            ack({ ok: false, error: "INTERNAL_SERVER_ERROR" });
+          }
         }
-      } catch (err) {
-        console.error("db-test socket error:", err);
-        if (ack) {
-          ack({ ok: false });
+      },
+    );
+
+    // ✅ 방 퇴장 이벤트: room:leave
+    // payload: { roomId: string }
+    // 클라이언트 예시: socket.emit("room:leave", { roomId }, (res) => { ... });
+    socket.on(
+      "room:leave",
+      (payload: { roomId?: string }, ack?: (res: any) => void) => {
+        try {
+          const roomId = payload?.roomId;
+          if (!roomId) {
+            if (ack) {
+              ack({ ok: false, error: "INVALID_PAYLOAD" });
+            }
+            return;
+          }
+
+          socket.leave(roomId);
+
+          const userId = (socket.data as any).userId ?? null;
+
+          // 다른 클라이언트에게 "누가 나갔다"를 알려주는 단순 broadcast
+          socket.to(roomId).emit("room:user-left", {
+            roomId,
+            userId,
+          });
+
+          if (ack) {
+            ack({ ok: true });
+          }
+        } catch (err) {
+          console.error("room:leave error:", err);
+          if (ack) {
+            ack({ ok: false, error: "INTERNAL_SERVER_ERROR" });
+          }
         }
-      }
-    });
+      },
+    );
 
     socket.on("disconnect", (reason) => {
       console.log("❌ disconnected:", socket.id, reason);
