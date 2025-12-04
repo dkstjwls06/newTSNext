@@ -467,6 +467,111 @@ async function startServer() {
       },
     );
 
+     // ✅ 방 채팅 전송 이벤트: room:chat:send
+    // payload: { roomId: string; message: string }
+    socket.on(
+      "room:chat:send",
+      async (
+        payload: { roomId?: string; message?: string },
+        ack?: (res: any) => void,
+      ) => {
+        try {
+          const userId = (socket.data as any).userId;
+          if (!userId) {
+            if (ack) {
+              ack({ ok: false, error: "UNAUTHENTICATED" });
+            }
+            return;
+          }
+
+          const roomId = payload?.roomId;
+          const message = payload?.message;
+
+          // roomId, message 기본 검증
+          if (
+            !roomId ||
+            typeof message !== "string" ||
+            message.trim().length === 0
+          ) {
+            if (ack) {
+              ack({ ok: false, error: "INVALID_PAYLOAD" });
+            }
+            return;
+          }
+
+          let roomObjectId: ObjectId;
+          try {
+            roomObjectId = new ObjectId(roomId);
+          } catch {
+            if (ack) {
+              ack({ ok: false, error: "INVALID_ROOM_ID" });
+            }
+            return;
+          }
+
+          const db = getDb();
+          const roomsCol = db.collection("rooms");
+          const chatMessagesCol = db.collection("chatMessages");
+          const usersCol = db.collection("users");
+
+          // 방 존재 여부 확인
+          const room = await roomsCol.findOne({ _id: roomObjectId });
+          if (!room) {
+            if (ack) {
+              ack({ ok: false, error: "ROOM_NOT_FOUND" });
+            }
+            return;
+          }
+
+          // 유저 정보 조회 (username 용)
+          const userObjectId = new ObjectId(userId);
+          const user = await usersCol.findOne({ _id: userObjectId });
+
+          const now = new Date();
+
+          // DB에 채팅 메시지 insert
+          const insertResult = await chatMessagesCol.insertOne({
+            channelType: "room",
+            roomId: roomObjectId,
+            gameId: room.gameId ?? null,
+            conversationId: null,
+            userId: userObjectId,
+            username: user?.username ?? null,
+            type: "text",
+            message,
+            createdAt: now,
+          });
+
+          const savedMessage = {
+            _id: insertResult.insertedId,
+            channelType: "room",
+            roomId: roomObjectId,
+            gameId: room.gameId ?? null,
+            conversationId: null,
+            userId: userObjectId,
+            username: user?.username ?? null,
+            type: "text",
+            message,
+            createdAt: now,
+          };
+
+          const socketRoomKey = roomObjectId.toHexString();
+
+          // 같은 방에 접속한 모든 유저에게 브로드캐스트
+          io.to(socketRoomKey).emit("room:chat:new", savedMessage);
+
+          if (ack) {
+            ack({ ok: true, message: savedMessage });
+          }
+        } catch (err) {
+          console.error("room:chat:send error:", err);
+          if (ack) {
+            ack({ ok: false, error: "INTERNAL_SERVER_ERROR" });
+          }
+        }
+      },
+    );
+
 
     socket.on("disconnect", (reason) => {
       console.log("❌ disconnected:", socket.id, reason);

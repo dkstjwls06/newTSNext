@@ -1,9 +1,13 @@
-// server/src/routes/rooms.ts
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { ObjectId } from "mongodb";
 import { getDb } from "../db/mongo";
-import type { RoomDoc, GameMode, RoomType } from "../db/types";
+import type {
+  RoomDoc,
+  GameMode,
+  RoomType,
+  ChatMessageDoc,
+} from "../db/types";
 import { verifySessionToken } from "../auth/session";
 import { ENV } from "../config/env";
 
@@ -261,6 +265,90 @@ roomsRouter.get("/", async (req: Request, res: Response) => {
     });
   }
 });
+
+/**
+ * GET /api/rooms/:roomId/messages
+ * 방 채팅 메시지 목록 조회 (channelType: "room")
+ * query: page, limit (옵션, 기본값 page=1, limit=50)
+ */
+roomsRouter.get(
+  "/:roomId/messages",
+  async (req: Request, res: Response) => {
+    try {
+      const { roomId } = req.params;
+
+      if (!ObjectId.isValid(roomId)) {
+        return res.status(400).json({
+          ok: false,
+          status: 400,
+          error: "INVALID_ID",
+        });
+      }
+
+      // 페이지네이션 파라미터 처리
+      const { page, limit } = req.query;
+
+      const pageNumRaw =
+        typeof page === "string" ? parseInt(page, 10) : 1;
+      const limitRaw =
+        typeof limit === "string" ? parseInt(limit, 10) : 50;
+
+      const pageNum =
+        Number.isFinite(pageNumRaw) && pageNumRaw > 0
+          ? pageNumRaw
+          : 1;
+      const limitNum =
+        Number.isFinite(limitRaw) && limitRaw > 0
+          ? limitRaw
+          : 50;
+
+      const skip = (pageNum - 1) * limitNum;
+
+      const db = getDb();
+      const chatMessagesCol =
+        db.collection<ChatMessageDoc>("chatMessages");
+
+      const messages = await chatMessagesCol
+        .find(
+          {
+            channelType: "room",
+            roomId: new ObjectId(roomId),
+          },
+          {
+            // projection은 필요하면 좁혀도 됨. 우선 전체 사용.
+          }
+        )
+        .sort({ createdAt: 1 })
+        .skip(skip)
+        .limit(limitNum)
+        .toArray();
+
+      return res.json({
+        ok: true,
+        page: pageNum,
+        limit: limitNum,
+        messages: messages.map((msg) => ({
+          id: msg._id.toHexString(),
+          userId: msg.userId.toHexString(),
+          username: msg.username,
+          message: msg.message,
+          type: msg.type,
+          createdAt: msg.createdAt,
+        })),
+      });
+    } catch (err) {
+      console.error(
+        "GET /api/rooms/:roomId/messages error:",
+        err
+      );
+      return res.status(500).json({
+        ok: false,
+        status: 500,
+        error: "INTERNAL_SERVER_ERROR",
+      });
+    }
+  }
+);
 
 /**
  * GET /api/rooms/:id
