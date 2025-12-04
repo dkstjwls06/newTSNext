@@ -31,7 +31,7 @@ interface RoomListItem {
     initialSeconds: number;
     incrementSeconds: number;
   };
-  createdAt: Date;
+  createdAt: string;
 }
 
 interface RoomsListResponse {

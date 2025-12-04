@@ -54,7 +54,7 @@ async function getSessionUserId(
 
 /**
  * POST /api/rooms
- * 방 생성 (public / friendly / ai 공통 뼈대)
+ * 방 생성 (public / friendly / 공통 뼈대)
  */
 roomsRouter.post("/", async (req: Request, res: Response) => {
   try {

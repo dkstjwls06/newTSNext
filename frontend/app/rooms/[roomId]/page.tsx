@@ -25,7 +25,7 @@ export interface RoomGameMove {
   to: string;
   san: string;
   by: "white" | "black";
-  createdAt: Date;
+  createdAt: string;
 }
 
 interface RoomGameState {
@@ -36,7 +36,7 @@ interface RoomGameState {
   clocks: {
     whiteRemainingMs: number;
     blackRemainingMs: number;
-    lastMoveAt: Date;
+    lastMoveAt: string;
   };
 
   moves: RoomGameMove[];
@@ -62,8 +62,8 @@ interface RoomDetail {
   };
   gameId: string | null;
   gameState: RoomGameState;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface RoomDetailResponse {
