@@ -175,7 +175,6 @@ export default function LoginPage() {
           </div>
         </form>
 
-        {/* 향후 회원가입 / 비밀번호 찾기 링크 자리 */}
         <div className="mt-4 flex justify-between text-xs text-gray-600">
           <button
             type="button"

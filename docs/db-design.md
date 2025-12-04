@@ -26,9 +26,8 @@
 
 ### 3) 게임 방 & 실시간 게임
 
-- 방 생성 (public/AI/friendly)
+- 방 생성 (public/friendly)
   - 매칭으로 생성 시, public 타입 활성화
-  - AI 버전은 이번 프로젝트에서는 구현하지 않지만, 추후 고도화를 위해 타입은 남겨둘 것
   - 친선 경기 수락 시, 두 친구만 들어가는 friendly 타입 활성화
 - public 시에는 rated 켜기, friendly 시에는 rated 끄기
 - friendly 시에는 요청 시 옵션에서 골랐던 커스텀 기능 활성화
@@ -305,10 +304,10 @@ NoSQL 설계에서 제일 중요한 “어떤 쿼리가 자주 나오냐”를 �
   _id: ObjectId("..."),
       
   // 이 방이 어떤 레이팅 모드에 해당하는지
-  // public(랭크) 게임은 필수, friendly/ai는 선택(또는 null)
+  // public(랭크) 게임은 필수, friendly는 선택(또는 null)
   mode: "rapid" | "blitz" | "bullet" | null,
      
-  type: "public" | "ai" | "friendly",
+  type: "public" | "friendly", // public = 랭크 큐, friendly = 친선
   status: "waiting" | "in_progress" | "finished",
 
   hostUserId: ObjectId("..."),
@@ -665,7 +664,6 @@ NoSQL 설계에서 제일 중요한 “어떤 쿼리가 자주 나오냐”를 �
 
 - `rooms.type` vs `rated` vs `friendlyMatchRequests.options.rated`
   - `rooms.type = "friendly"` → `rooms.rated` = **항상 false**
-  - `rooms.type = "ai"`  → 이번 프로젝트에서는 `rooms.rated = false`
   - friendlyMatchRequest로부터 생성된 방/게임이라면:
     `friendlyMatchRequests.options.rated === rooms.rated === games.rated`
   - public(랭크) 게임에 대해서:

@@ -2,7 +2,7 @@ import type { ObjectId } from "mongodb";
 
 // 공통 리터럴 타입들
 export type GameMode = "rapid" | "blitz" | "bullet";
-export type RoomType = "public" | "ai" | "friendly";
+export type RoomType = "public" | "friendly";
 export type RoomStatus = "waiting" | "in_progress" | "finished";
 export type ChannelType = "room" | "direct";
 export type FriendlyRequestStatus =
