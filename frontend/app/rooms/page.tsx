@@ -97,13 +97,17 @@ export default function RoomsPage() {
 
             {!loading && !error && rooms && rooms.length > 0 && (
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
+                <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
+                      <th className="py-2 pr-4 text-left">유형</th>
                       <th className="py-2 pr-4 text-left">모드</th>
                       <th className="py-2 pr-4 text-left">상태</th>
                       <th className="py-2 pr-4 text-left">레이팅</th>
                       <th className="py-2 pr-4 text-left">시간제</th>
+                      <th className="py-2 pr-4 text-left">호스트</th>
+                      <th className="py-2 pr-4 text-left">백</th>
+                      <th className="py-2 pr-4 text-left">흑</th>
                       <th className="py-2 pr-4 text-left">생성 시각</th>
                       <th className="py-2 pr-4 text-right">액션</th>
                     </tr>
@@ -111,6 +115,9 @@ export default function RoomsPage() {
                   <tbody>
                     {rooms.map((room) => (
                       <tr key={room.id} className="border-b last:border-b-0">
+                        <td className="py-2 pr-4">
+                          {room.type}
+                        </td>
                         <td className="py-2 pr-4">
                           {room.mode ?? "-"}
                         </td>
@@ -123,6 +130,12 @@ export default function RoomsPage() {
                         <td className="py-2 pr-4">
                           {room.timeControl.initialSeconds}s +{" "}
                           {room.timeControl.incrementSeconds}
+                        </td>
+                        <td className="py-2 pr-4">
+                          {room.whiteUserId ? room.whiteUserId : '-'}
+                        </td>
+                        <td className="py-2 pr-4">
+                          {room.blackUserId ? room.blackUserId : '-'}
                         </td>
                         <td className="py-2 pr-4">
                           {new Date(room.createdAt).toLocaleString()}
