@@ -53,7 +53,6 @@ export async function initDb(db: Db) {
     { key: { whiteUserId: 1 }, name: "rooms_whiteUserId" },
     { key: { blackUserId: 1 }, name: "rooms_blackUserId" },
     { key: { hostUserId: 1 }, name: "rooms_hostUserId" },
-    { key: { code: 1 }, unique: true, sparse: true, name: "rooms_code_unique" },
   ]);
 
   // 6) games

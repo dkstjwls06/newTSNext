@@ -124,7 +124,6 @@ roomsRouter.post("/", async (req: Request, res: Response) => {
     const initialRemainingMs = timeControl.initialSeconds * 1000;
     // 최소한의 gameState만 채워두고, 상세 로직은 이후 6.3-3, 6.3-4에서 확장
     const insertResult = await roomsCol.insertOne({
-      code: null,
       mode: mode ?? null,
       type,
       status: "waiting",
@@ -221,7 +220,6 @@ roomsRouter.get("/", async (req: Request, res: Response) => {
     const rooms = await roomsCol
       .find(filter, {
         projection: {
-          code: 1,
           mode: 1,
           type: 1,
           status: 1,
@@ -397,8 +395,7 @@ roomsRouter.get("/:id", async (req: Request, res: Response) => {
         blackUserId: room.blackUserId
           ? room.blackUserId.toHexString()
           : null,
-        gameId: room.gameId ? room.gameId.toHexString() : null,
-        code: room.code,
+        gameId: room.gameId ? room.gameId.toHexString() : null, 
         gameState: room.gameState,
         createdAt: room.createdAt,
         updatedAt: room.updatedAt,

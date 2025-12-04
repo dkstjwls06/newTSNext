@@ -303,7 +303,6 @@ NoSQL 설계에서 제일 중요한 “어떤 쿼리가 자주 나오냐”를 �
 //   friendlyMatchRequests.options.rated must equal rooms.rated and games.rated.
 {
   _id: ObjectId("..."),
-  code: "A1B2C3",
       
   // 이 방이 어떤 레이팅 모드에 해당하는지
   // public(랭크) 게임은 필수, friendly/ai는 선택(또는 null)
@@ -590,11 +589,6 @@ NoSQL 설계에서 제일 중요한 “어떤 쿼리가 자주 나오냐”를 �
     db.rooms.createIndex({ hostUserId: 1 });
     ```
 
-  - 초대 코드로 방 찾기:
-
-    ```js
-    db.rooms.createIndex({ code: 1 }, { unique: true, sparse: true });
-    ```
 
 - `games`
 

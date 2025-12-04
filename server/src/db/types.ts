@@ -129,7 +129,6 @@ export interface RoomGameState {
 
 export interface RoomDoc {
   _id: ObjectId;
-  code?: string; // unique, sparse
 
   mode: GameMode | null;
   type: RoomType;
