@@ -19,7 +19,7 @@ type WinnerColor = "white" | "black" | "draw" | "none";
 export async function finishGameForRoom(
   roomId: ObjectId,
   params: {
-    resultStatus: RoomResultStatus;
+    resultStatus: Exclude<RoomResultStatus, "ongoing">;
     resultReason: string;
   },
 ): Promise<{ room: RoomDoc; game: GameDoc }> {
@@ -45,19 +45,18 @@ export async function finishGameForRoom(
 
   const whiteUserId = room.whiteUserId;
   const blackUserId = room.blackUserId;
-  
 
   const now = new Date();
 
-  const RoomResultStatus: RoomResultStatus = params.resultStatus;
+  const roomResultStatus: RoomResultStatus = params.resultStatus;
 
   // RoomGameState.result.status -> GameDoc.result.winner 로 매핑
   const winner: WinnerColor =
-    RoomResultStatus === "white_win"
+    roomResultStatus === "white_win"
       ? "white"
-      : RoomResultStatus === "black_win"
+      : roomResultStatus === "black_win"
       ? "black"
-      : RoomResultStatus === "draw"
+      : roomResultStatus === "draw"
       ? "draw"
       : "none";
 
@@ -65,7 +64,7 @@ export async function finishGameForRoom(
   const updatedGameState: RoomDoc["gameState"] = {
     ...room.gameState,
     result: {
-      status: RoomResultStatus,
+      status: roomResultStatus,
       reason: params.resultReason,
     },
   };
@@ -89,8 +88,8 @@ export async function finishGameForRoom(
     whiteUserId,
     blackUserId,
     mode: room.mode ?? null,
-    timeControl: room.timeControl ?? null,
-    rated: room.rated ?? false,
+    timeControl: room.timeControl,
+    rated: room.rated,
     result: {
       winner,
       reason: params.resultReason,
@@ -99,8 +98,6 @@ export async function finishGameForRoom(
     moves: gameMoves,
     startedAt: room.createdAt,
     endedAt: now,
-    createdAt: now,
-    updatedAt: now,
   };
 
   let ratingChange: GameRatingChange | null = null;
@@ -305,7 +302,7 @@ async function applyUserStatsIncrement(
 ): Promise<void> {
   const inc: Record<string, number> = {
     "summary.totalGames": 1,
-    [`modes.${params.mode}.total`]: 1,
+    [`modes.${params.mode}.totalF`]: 1,
   };
 
   if (params.outcome === "win") {
