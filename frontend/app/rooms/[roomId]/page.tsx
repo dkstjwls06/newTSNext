@@ -225,7 +225,7 @@ export default function RoomDetailPage() {
                     </span>
                   </div>
 
-                  {/* 실제 입장/게임 화면으로 넘어가는 버튼은 6.3-8에서 라우팅 결정 */}
+                  {/* 6.3-8: 이 페이지 안에서 바로 방 게임 화면(체스보드 + 채팅)을 렌더링 */}
                   <div className="pt-4 border-t mt-4">
                     <RoomGameView roomId={room.id} />
                   </div>
