@@ -132,6 +132,9 @@ export default function RoomsPage() {
                           {room.timeControl.incrementSeconds}
                         </td>
                         <td className="py-2 pr-4">
+                          {room.hostUserId ? room.hostUserId : '-'}
+                        </td>
+                        <td className="py-2 pr-4">
                           {room.whiteUserId ? room.whiteUserId : '-'}
                         </td>
                         <td className="py-2 pr-4">

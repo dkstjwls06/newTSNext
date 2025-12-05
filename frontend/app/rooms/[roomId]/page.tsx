@@ -14,6 +14,7 @@ import {
   CardContent,
 } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import RoomGameView from "@/components/game/RoomGameView";
 
 type RoomType = "public" | "friendly";
 type GameMode = "rapid" | "blitz" | "bullet";
@@ -170,11 +171,10 @@ export default function RoomDetailPage() {
       <PageContainer layout="top">
         <div className="w-full max-w-2xl">
           <Card>
-            <CardHeader>
-              <CardTitle>친선 방 상세</CardTitle>
+          <CardHeader>
+            <CardTitle>방 상세</CardTitle>
               <CardDescription>
-                방 기본 정보와 입장 버튼만 제공하는 단계입니다.
-                실제 체스보드 / 실시간 동기화 / 채팅 UI는 6.3-8에서 붙일 예정입니다.
+                방 기본 정보를 확인하고, 아래에서 실제 체스보드 / 실시간 동기화 / 채팅 UI까지 함께 사용할 수 있습니다.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -226,10 +226,8 @@ export default function RoomDetailPage() {
                   </div>
 
                   {/* 실제 입장/게임 화면으로 넘어가는 버튼은 6.3-8에서 라우팅 결정 */}
-                  <div className="pt-4">
-                    <Button variant="primary" disabled>
-                      게임 화면은 아직 구현되지 않았습니다
-                    </Button>
+                  <div className="pt-4 border-t mt-4">
+                    <RoomGameView roomId={room.id} />
                   </div>
                 </div>
               )}

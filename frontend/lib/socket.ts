@@ -1,3 +1,4 @@
+// frontend/lib/socket.ts
 import { io } from "socket.io-client";
 
 function getSocketBaseUrl() {
@@ -17,6 +18,51 @@ function getSocketBaseUrl() {
 
 const baseURL = getSocketBaseUrl();
 
+// 기존 코드와의 호환성을 위해 socket 인스턴스 export는 그대로 유지
 export const socket = io(baseURL, {
   transports: ["websocket"],
 });
+
+// 공통 타입: onXXX 호출 시 반환되는 구독 해제 함수 타입
+export type SocketUnsubscribe = () => void;
+
+/**
+ * room:state 이벤트 구독 유틸
+ * 서버에서 { roomId, room } 형태로 내려주므로 payload 전체를 그대로 넘겨준다.
+ */
+export function onRoomState(handler: (payload: any) => void): SocketUnsubscribe {
+  socket.on("room:state", handler);
+  return () => {
+    socket.off("room:state", handler);
+  };
+}
+
+/**
+ * room:user-joined 이벤트 구독 유틸
+ */
+export function onRoomUserJoined(handler: (payload: any) => void): SocketUnsubscribe {
+  socket.on("room:user-joined", handler);
+  return () => {
+    socket.off("room:user-joined", handler);
+  };
+}
+
+/**
+ * room:user-left 이벤트 구독 유틸
+ */
+export function onRoomUserLeft(handler: (payload: any) => void): SocketUnsubscribe {
+  socket.on("room:user-left", handler);
+  return () => {
+    socket.off("room:user-left", handler);
+  };
+}
+
+/**
+ * room:chat:new 이벤트 구독 유틸
+ */
+export function onRoomChatNew(handler: (payload: any) => void): SocketUnsubscribe {
+  socket.on("room:chat:new", handler);
+  return () => {
+    socket.off("room:chat:new", handler);
+  };
+}
